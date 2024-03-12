@@ -5,6 +5,7 @@ urlpatterns = [
     path("register/", RegisterUserAPIView.as_view(), name="register"),
     path("verify-email/", VerifyUserEmailAPIView.as_view(), name="verify"),
     path("login/", LoginUserAPIView.as_view(), name="login"),
+    path("logout/", LogoutAPIView.as_view(), name="logout"),
     path(
         "password-reset/",
         PasswordResetRequestAPIView.as_view(),

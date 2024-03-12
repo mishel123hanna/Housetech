@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from .models import *
 from rest_framework.generics import GenericAPIView
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from .serializers import (
     UserRegisterationSerializer,
     UserLoginSerializer,
@@ -20,6 +20,7 @@ from django.conf import settings
 
 class RegisterUserAPIView(GenericAPIView):
     serializer_class = UserRegisterationSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         user_data = request.data
@@ -39,6 +40,7 @@ class RegisterUserAPIView(GenericAPIView):
 
 
 class VerifyUserEmailAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
     def post(self, request):
         otp_code = request.data.get("otp")
         email = request.data.get("email")
@@ -65,6 +67,7 @@ class VerifyUserEmailAPIView(GenericAPIView):
 
 class LoginUserAPIView(GenericAPIView):
     serializer_class = UserLoginSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(
@@ -73,19 +76,20 @@ class LoginUserAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-# class LogoutAPIView(GenericAPIView):
-#     permission_classes = (IsAuthenticated,)
+class LogoutAPIView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
 
-#     def post(self, request):
-#         try:
-#             token = request.auth
-#             token.delete()
-#             return Response({'success': 'Successfully logged out.'}, status=status.HTTP_200_OK)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        try:
+            token = request.auth
+            token.delete()
+            return Response({'success': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetRequestAPIView(GenericAPIView):
     serializer_class = PasswordResetSerializer
+    permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -110,6 +114,7 @@ class PasswordResetRequestAPIView(GenericAPIView):
 
 
 class PasswordResetConfirmAPIView(GenericAPIView):
+    permission_classes = (AllowAny,)
     def post(self, request):
         email = request.data.get("email", "")
         code = request.data.get("code", "")
@@ -129,18 +134,14 @@ class PasswordResetConfirmAPIView(GenericAPIView):
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
             if code and not new_password:
-                # Include a flag indicating that the verification code is valid
                 data = {"email": email, "valid": True}
 
-                # You can customize the response or include additional data if needed
                 return Response(data, status=status.HTTP_200_OK)
             if code and new_password and confirm_password:
                 if new_password == confirm_password:
-                    # Update the user's password using set_password
                     user.set_password(new_password)
                     user.save()
 
-                    # Delete the used reset code entry
                     reset_entry.delete()
                     return Response(
                         {"detail": "successfully reset password"},
@@ -159,9 +160,8 @@ class PasswordResetConfirmAPIView(GenericAPIView):
         except PasswordResetCode.DoesNotExist:
             raise AuthenticationFailed(
                 {"detail": "Invalid or expired password reset code."},
-                status=status.HTTP_401_UNAUTHORIZED,
             )
-
+    
 
 
 
@@ -193,7 +193,9 @@ class UpdateProfileAPIView(GenericAPIView):
         serializer = UpdateProfileSerializer(
             instance=request.user.profile, data=data, partial=True
         )
-
-        serializer.is_valid()
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if serializer.is_valid():
+            serializer.save()  
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
