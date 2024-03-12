@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     # Third Party Packages
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework.authtoken",
     "autoslug",
     "phonenumber_field",
     # Apps
@@ -150,16 +151,20 @@ MEDIA_ROOT = BASE_DIR / "mediafiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": [
+    "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+    "rest_framework.authentication.SessionAuthentication",
+    "rest_framework.authentication.TokenAuthentication",
+    ],
 }
-SIMPLE_JWT = {
-    "AUTH_HEADER_TYPES": ("Bearer", "JWT"),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=356),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=356),
-    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-}
+# SIMPLE_JWT = {
+#     "AUTH_HEADER_TYPES": ("Bearer", "JWT"),
+#     "ACCESS_TOKEN_LIFETIME": timedelta(days=356),
+#     "REFRESH_TOKEN_LIFETIME": timedelta(days=356),
+#     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+# }
 
 
 AUTH_USER_MODEL = "accounts.CustomUser"

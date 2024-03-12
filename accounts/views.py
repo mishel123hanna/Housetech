@@ -73,6 +73,16 @@ class LoginUserAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+# class LogoutAPIView(GenericAPIView):
+#     permission_classes = (IsAuthenticated,)
+
+#     def post(self, request):
+#         try:
+#             token = request.auth
+#             token.delete()
+#             return Response({'success': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+#         except Exception as e:
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class PasswordResetRequestAPIView(GenericAPIView):
     serializer_class = PasswordResetSerializer
@@ -153,12 +163,7 @@ class PasswordResetConfirmAPIView(GenericAPIView):
             )
 
 
-# class LogoutAPIView(GenericAPIView):
-#     serializer_class = LogoutSerializer
-#     permission_classes = (IsAuthenticated,)
-#     def post(self, request):
-#         serializer = self.serializer_class(request.data)
-#         if serializer.is_valid():
+
 
 
 class GetProfileAPIView(GenericAPIView):

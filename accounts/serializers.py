@@ -4,6 +4,8 @@ from .models import *
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from phonenumber_field.modelfields import PhoneNumberField
+from rest_framework.authtoken.models import Token
+
 
 
 
@@ -36,12 +38,13 @@ class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255, min_length=6)
     password = serializers.CharField(max_length=60, write_only=True)
     full_name = serializers.CharField(max_length=255, read_only=True)
-    access_token = serializers.CharField(max_length=255, read_only=True)
-    refresh_token = serializers.CharField(max_length=255, read_only=True)
+    token = serializers.CharField(max_length = 100, read_only=True)
+    # access_token = serializers.CharField(max_length=255, read_only=True)
+    # refresh_token = serializers.CharField(max_length=255, read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ["email", "password", "full_name", "access_token", "refresh_token"]
+        fields = ["email", "password", "full_name", "token"]
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -52,13 +55,13 @@ class UserLoginSerializer(serializers.Serializer):
             raise AuthenticationFailed("invalid credentials try again")
         if not user.is_active:
             raise AuthenticationFailed("Email is not Verified")
-        user_tokens = user.tokens()
-
+        token = Token.objects.get_or_create(user=user)
+        print(token)
         return {
             "email": user.email,
             "full_name": user.get_full_name,
-            "access_token": str(user_tokens.get("access")),
-            "refresh_token": str(user_tokens.get("refresh")),
+            "token": token[0],
+            # "refresh_token": str(user_tokens.get("refresh")),
         }
 
 
