@@ -152,6 +152,8 @@ class PasswordResetConfirmAPIView(GenericAPIView):
                         {"datial": "passwords did not match"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+            else:
+                return Response({"message":"email , code, new_password, confirm_password are required"})
         except CustomUser.DoesNotExist:
             return Response(
                 {"detail": "User with this email does not exist."},
