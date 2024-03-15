@@ -37,7 +37,7 @@ SECRET_KEY = env("SECRET_KEY")
 # False if not in os.environ because of casting above
 DEBUG = env("DEBUG")
 
-ALLOWED_HOSTS = env("ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
 # Application definition
 
@@ -97,15 +97,13 @@ WSGI_APPLICATION = "project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        # "NAME": env("DB_NAME"),
-        # "USER": env("DB_USER"),
-        # "PASSWORD": env("DB_PASSWORD"),
-        # "HOST": env("DB_HOST"),
-        # "PORT": env("DB_PORT"),
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
     }
 }
-database_url = env("DATABASE_URL")
-DATABASES["default"] = dj_database_url.parse(database_url)
                                              
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
