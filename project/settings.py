@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import environ
 from pathlib import Path
 import os
+import dj_database_url
 from datetime import timedelta
 
 
@@ -104,8 +105,9 @@ DATABASES = {
         "PORT": env("DB_PORT"),
     }
 }
-
-
+database_url = env("DATABASE_URL")
+DATABASES["default"] = dj_database_url.parse(database_url)
+                                             
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 

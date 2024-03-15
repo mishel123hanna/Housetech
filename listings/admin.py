@@ -8,4 +8,4 @@ class PropertyAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Property, PropertyAdmin)
-admin.site.register(PropertyViews)
+admin.site.register([PropertyViews, Pictures])
