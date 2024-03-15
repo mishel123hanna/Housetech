@@ -9,15 +9,23 @@ from autoslug import AutoSlugField
 
 User = get_user_model()
 
+class PropertyPublishedManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super(PropertyPublishedManager, self)
+            .get_queryset()
+            .filter(published_status=True)
+        )
+    
 # class Location(models.Model):
-#     latitude = gis_models.FloatField(verbose_name=_("Latitude"))
-#     longitude = gis_models.FloatField(verbose_name=_("Longitude"))
-#     city = models.CharField(max_length=50)
-#     region = models.CharField(max_length=50)
-#     street = models.CharField(max_length=50)
+    # latitude = gis_models.FloatField(verbose_name=_("Latitude"))
+    # longitude = gis_models.FloatField(verbose_name=_("Longitude"))
+    # city = models.CharField(max_length=50)
+    # region = models.CharField(max_length=50)
+    # street = models.CharField(max_length=50)
 
     # def __str__(self):
-    #     return f"{self.latitude}, {self.longitude}"
+    #     return f"{self.region}"
 
 class Property(models.Model):
     class PropertyStatus(models.TextChoices):
@@ -73,6 +81,9 @@ class Property(models.Model):
     cover_photo = models.ImageField(
         verbose_name=_("Main Photo"), default="/house_sample.jpg", null=True, blank=True
     )
+    city = models.CharField(max_length=50)
+    region = models.CharField(max_length=50)
+    street = models.CharField(max_length=50)
     views = models.IntegerField(verbose_name=_("Total Views"), default=0)
     total_floors = models.IntegerField(verbose_name=_("Number of floors"), default=0)
     bedrooms = models.IntegerField(verbose_name=_("Bedrooms"), default=1)
@@ -87,7 +98,11 @@ class Property(models.Model):
     #     null=True,
     #     blank=True,
     # )
+    published_status = models.BooleanField(
+        verbose_name=_("Published Status"), default=False
+    )
     objects = models.Manager()
+    published = PropertyPublishedManager()
 
 
     def __str__(self):
@@ -109,3 +124,17 @@ class Pictures(models.Model):
         blank=True,)
 
 
+class PropertyViews(models.Model):
+    ip = models.CharField(verbose_name=_("IP Address"), max_length=250)
+    property = models.ForeignKey(
+        Property, related_name="property_views", on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return (
+            f"Total views on - {self.property.title} is - {self.property.views} view(s)"
+        )
+
+    class Meta:
+        verbose_name = "Total Views on Property"
+        verbose_name_plural = "Total Property Views"

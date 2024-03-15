@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from .models import *
+from rest_framework import generics
 from rest_framework.generics import GenericAPIView
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -102,7 +103,7 @@ class PasswordResetRequestAPIView(GenericAPIView):
                 PasswordResetCode.objects.update_or_create(user=user, code=0)
 
                 return Response(
-                    {"detail": "Password reset email sent successfully."},
+                    {"message": "Password reset email sent successfully."},
                     status=status.HTTP_200_OK,
                 )
             except:
@@ -130,7 +131,7 @@ class PasswordResetConfirmAPIView(GenericAPIView):
                 timezone.now() - reset_entry.timestamp
             ).seconds > settings.PASSWORD_RESET_TIMEOUT:
                 raise AuthenticationFailed(
-                    {"detail": "Password reset code has expired."},
+                    {"message": "Password reset code has expired."},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
             if code and not new_password:
@@ -144,7 +145,7 @@ class PasswordResetConfirmAPIView(GenericAPIView):
 
                     reset_entry.delete()
                     return Response(
-                        {"detail": "successfully reset password"},
+                        {"message": "successfully reset password"},
                         status=status.HTTP_201_CREATED,
                     )
                 else:
@@ -156,12 +157,12 @@ class PasswordResetConfirmAPIView(GenericAPIView):
                 return Response({"message":"email , code, new_password, confirm_password are required"})
         except CustomUser.DoesNotExist:
             return Response(
-                {"detail": "User with this email does not exist."},
+                {"message": "User with this email does not exist."},
                 status=status.HTTP_404_NOT_FOUND,
             )
         except PasswordResetCode.DoesNotExist:
             raise AuthenticationFailed(
-                {"detail": "Invalid or expired password reset code."},
+                {"message": "Invalid or expired password reset code."},
             )
     
 
@@ -175,7 +176,7 @@ class GetProfileAPIView(GenericAPIView):
         user = self.request.user
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context = {"request":request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"profile":serializer.data}, status=status.HTTP_200_OK)
     
 class UpdateProfileAPIView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -187,8 +188,7 @@ class UpdateProfileAPIView(GenericAPIView):
         try:
             Profile.objects.get(user__email=email)
         except Profile.DoesNotExist:
-            return Response({"detail":"user does not exist"}, status = status.HTTP_404_NOT_FOUND)
-        print(email)
+            return Response({"message":"user does not exist"}, status = status.HTTP_404_NOT_FOUND)
         if email != email:
             return Response({"message":"Not your Profile"}, status=status.HTTP_403_FORBIDDEN)
         data = request.data
@@ -201,3 +201,13 @@ class UpdateProfileAPIView(GenericAPIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
+
+class TopAgentsListAPIView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Profile.objects.filter(top_agent=True)
+    serializer_class = ProfileSerializer
+
+class AgentListAPIView(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    queryset = Profile.objects.filter(is_agent=True)
+    serializer_class = ProfileSerializer

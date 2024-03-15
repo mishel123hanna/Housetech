@@ -22,9 +22,14 @@ urlpatterns = [
         name = "get_user_profile"
     ),
     path(
-        "edit-profile",
+        "edit-profile/",
         UpdateProfileAPIView.as_view(),
         name = "update_user_profile"
-    )
+    ),
+    path(
+        "agents/",
+        AgentListAPIView.as_view(),
+        name = "get_all_agents"
+    ),
 
 ]
