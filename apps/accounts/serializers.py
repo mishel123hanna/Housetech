@@ -98,7 +98,7 @@ class ProfileSerializer(serializers.Serializer):
     is_buyer = serializers.BooleanField()
     is_seller = serializers.BooleanField()
     is_agent = serializers.BooleanField()
-    top_agent = serializers.BooleanField()
+    # top_agent = serializers.BooleanField()
     rating = serializers.DecimalField(max_digits=4, decimal_places=2)
     num_reviews = serializers.IntegerField()
     full_name = serializers.SerializerMethodField(read_only=True)
@@ -110,7 +110,7 @@ class ProfileSerializer(serializers.Serializer):
             "last_name",
             "full_name",
             "email",
-            "id",
+            # "pkid",
             "phone_number",
             "profile_photo",
             "about_me",
@@ -145,11 +145,11 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "is_agent",
         ]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if instance.top_agent:
-            representation["top_agent"] = True
-        return representation
+    # def to_representation(self, instance):
+    #     representation = super().to_representation(instance)
+    #     if instance.top_agent:
+    #         representation["top_agent"] = True
+    #     return representation
 
 
 

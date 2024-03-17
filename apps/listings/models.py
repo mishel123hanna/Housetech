@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from autoslug import AutoSlugField
+from apps.utils.models import TimeStampedUUIDModel
 
 User = get_user_model()
 
@@ -27,7 +28,7 @@ class PropertyPublishedManager(models.Manager):
     # def __str__(self):
     #     return f"{self.region}"
 
-class Property(models.Model):
+class Property(TimeStampedUUIDModel):
     class PropertyStatus(models.TextChoices):
         FOR_SALE = "For Sale", _("For Sale")
         FOR_RENT = "For Rent", _("For Rent")
@@ -117,14 +118,14 @@ class Property(models.Model):
         super(Property, self).save(*args, **kwargs)
 
 
-class Pictures(models.Model):
+class Pictures(TimeStampedUUIDModel):
     property_id = models.ForeignKey(Property, on_delete=models.CASCADE)
     picture = models.ImageField(default="/interior_sample.jpg",
         null=True,
         blank=True,)
 
 
-class PropertyViews(models.Model):
+class PropertyViews(TimeStampedUUIDModel):
     ip = models.CharField(verbose_name=_("IP Address"), max_length=250)
     property = models.ForeignKey(
         Property, related_name="property_views", on_delete=models.CASCADE

@@ -41,26 +41,30 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = ["*"]
 # Application definition
 
-INSTALLED_APPS = [
+
+DJANGO_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # Third Party Packages
+]
+THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework.authtoken",
     "autoslug",
     "phonenumber_field",
     'django_filters',
-
-    # Apps
-    "accounts",
-    "social_accounts",
-    "listings",
 ]
+LOCAL_APPS = [
+    "apps.utils",
+    "apps.accounts",
+    "apps.listings",
+    "apps.social_accounts",
+]
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -151,16 +155,15 @@ USE_TZ = True
 
 STATIC_URL = "/staticfiles/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIR = []
+STATICFILES_DIRS = [] 
 MEDIA_URL = "/mediafiles/"
 MEDIA_ROOT = BASE_DIR / "mediafiles"
 
-STORAGES = {
-    # ...
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# STORAGES = {
+#     "staticfiles": {
+#         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+#     },
+# }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -185,7 +188,7 @@ REST_FRAMEWORK = {
 
 
 AUTHENTICATION_BACKENDS = [
-    'accounts.serializers.CustomEmailBackend',
+    'apps.accounts.serializers.CustomEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 AUTH_USER_MODEL = "accounts.CustomUser"

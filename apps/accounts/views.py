@@ -203,10 +203,10 @@ class UpdateProfileAPIView(GenericAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
 
-class TopAgentsListAPIView(generics.ListAPIView):
-    permission_classes = (IsAuthenticated,)
-    queryset = Profile.objects.filter(top_agent=True)
-    serializer_class = ProfileSerializer
+# class TopAgentsListAPIView(generics.ListAPIView):
+#     permission_classes = (IsAuthenticated,)
+#     queryset = Profile.objects.filter(top_agent=True)
+#     serializer_class = ProfileSerializer
 
 class AgentListAPIView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)

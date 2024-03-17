@@ -10,7 +10,7 @@ from django.contrib.auth.models import (
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 from phonenumber_field.modelfields import PhoneNumberField
-
+from apps.utils.models import TimeStampedUUIDModel
 
 
 class CustomUserManager(BaseUserManager):
@@ -116,16 +116,16 @@ class Gender(models.TextChoices):
     MALE = "Male",_("MALE")
     FEMALE = "Female",_("Female")
 
-class Profile(models.Model):
+class Profile(TimeStampedUUIDModel):
     user = models.OneToOneField(CustomUser, related_name = "profile", on_delete = models.CASCADE)
-    phone_number = PhoneNumberField(
+    phone_number = models.CharField(
         verbose_name=_("Phone Number"), max_length=30, default="+41524204242"
     )
     about_me = models.TextField(
         verbose_name=_("About me"), default="say something about yourself"
     )
     profile_photo = models.ImageField(
-        verbose_name=_("Profile Photo"), default="/profile_default.png"
+        verbose_name=_("Profile Photo"), default="/download.png"
     )
     gender = models.CharField(
         verbose_name=_("Gender"),
