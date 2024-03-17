@@ -3,6 +3,7 @@ import string
 from django.db import models
 # from django.contrib.gis.db import models as gis_models
 # from django.contrib.gis.geos import Point
+from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from autoslug import AutoSlugField
@@ -80,11 +81,16 @@ class Property(TimeStampedUUIDModel):
         default=PropertyType.OTHER,
     )
     cover_photo = models.ImageField(
-        verbose_name=_("Main Photo"), default="/house_sample.jpg", null=True, blank=True
+        verbose_name=_("Main Photo"), default="/house.jpeg", null=True, blank=True
     )
-    city = models.CharField(max_length=50)
-    region = models.CharField(max_length=50)
-    street = models.CharField(max_length=50)
+    city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
+    region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
+    street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
+    property_number = models.IntegerField(
+        verbose_name=_("Property Number"),
+        validators=[MinValueValidator(1)],
+        default=1,
+    )
     views = models.IntegerField(verbose_name=_("Total Views"), default=0)
     total_floors = models.IntegerField(verbose_name=_("Number of floors"), default=0)
     bedrooms = models.IntegerField(verbose_name=_("Bedrooms"), default=1)
@@ -118,9 +124,9 @@ class Property(TimeStampedUUIDModel):
         super(Property, self).save(*args, **kwargs)
 
 
-class Pictures(TimeStampedUUIDModel):
+class PropertyPictures(TimeStampedUUIDModel):
     property_id = models.ForeignKey(Property, on_delete=models.CASCADE)
-    picture = models.ImageField(default="/interior_sample.jpg",
+    image = models.ImageField(default="/house.jpg",
         null=True,
         blank=True,)
 
