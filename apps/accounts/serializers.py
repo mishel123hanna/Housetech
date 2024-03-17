@@ -5,7 +5,8 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework.authtoken.models import Token
-
+from django.contrib.auth import get_user_model
+from django.contrib.auth.backends import ModelBackend
 
 
 
@@ -50,7 +51,9 @@ class UserLoginSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
         request = self.context.get("request")
+        print(request)
         user = authenticate(request, email=email, password=password)
+        print(user)
         if not user:
             raise AuthenticationFailed("invalid credentials try again")
         if not user.is_active:
@@ -147,3 +150,26 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         if instance.top_agent:
             representation["top_agent"] = True
         return representation
+
+
+
+class CustomEmailBackend(ModelBackend):
+    def authenticate(self, request, email=None, password=None, **kwargs):
+        User = get_user_model()
+        
+        if email is None or password is None:
+            return None
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return None
+        
+        if user.check_password(password) and user.is_active:
+            return user
+        elif user.check_password(password) and not user.is_active:
+            # Handle inactive users here (optional)
+            raise AuthenticationFailed("Email is not Verified")
+         
+        else:
+            return None

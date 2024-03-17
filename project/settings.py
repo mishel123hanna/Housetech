@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "autoslug",
     "phonenumber_field",
+    'django_filters',
+
     # Apps
     "accounts",
     "social_accounts",
@@ -182,6 +184,10 @@ REST_FRAMEWORK = {
 # }
 
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.serializers.CustomEmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 AUTH_USER_MODEL = "accounts.CustomUser"
 
 EMAIL_HOST = env("EMAIL_HOST")

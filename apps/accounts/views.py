@@ -71,6 +71,7 @@ class LoginUserAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        print(request.user)
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
