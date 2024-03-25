@@ -51,7 +51,7 @@ class VerifyUserEmailAPIView(GenericAPIView):
             if not user.is_active:
                 user.is_active = True
                 user.save()
-                # otp_obj.delete() 
+                otp_obj.delete() 
                 return Response(
                     {"message": "account verified successfully"},
                     status=status.HTTP_200_OK,

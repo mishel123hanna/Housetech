@@ -62,8 +62,9 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.utils",
     "apps.accounts",
-    "apps.listings",
+    "apps.properties",
     "apps.social_accounts",
+    "apps.ratings",
 ]
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -83,6 +84,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:9000",
+    "http://localhost:12345"
 ]
 
 ROOT_URLCONF = "project.urls"

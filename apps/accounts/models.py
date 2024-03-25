@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -63,6 +64,8 @@ AUTH_PROVIDERS = {"email": "Email", "google": "Google"}
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    pkid = models.BigAutoField(primary_key=True, editable=False)
+    id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     email = models.EmailField(max_length=255, unique=True, verbose_name=_("Email"))
     first_name = models.CharField(verbose_name=_("First Name"), max_length=50)
     last_name = models.CharField(verbose_name=_("Last Name"), max_length=50)
@@ -88,9 +91,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-    def tokens(self):
-        refresh = RefreshToken.for_user(self)
-        return {"refresh": str(refresh), "access": str(refresh.access_token)}
+    # def tokens(self):
+    #     refresh = RefreshToken.for_user(self)
+    #     return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
 
 class OneTimePassword(models.Model):
