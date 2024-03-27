@@ -9,8 +9,8 @@ from django.contrib.auth.models import (
     BaseUserManager,
 )
 from django.utils.translation import gettext_lazy as _
-from rest_framework_simplejwt.tokens import RefreshToken
-from phonenumber_field.modelfields import PhoneNumberField
+# from rest_framework_simplejwt.tokens import RefreshToken
+# from phonenumber_field.modelfields import PhoneNumberField
 from apps.utils.models import TimeStampedUUIDModel
 
 
@@ -122,7 +122,7 @@ class Gender(models.TextChoices):
 class Profile(TimeStampedUUIDModel):
     user = models.OneToOneField(CustomUser, related_name = "profile", on_delete = models.CASCADE)
     phone_number = models.CharField(
-        verbose_name=_("Phone Number"), max_length=30, default="+41524204242"
+        verbose_name=_("Phone Number"), max_length=30, default="0999999999"
     )
     about_me = models.TextField(
         verbose_name=_("About me"), default="say something about yourself"
@@ -156,7 +156,6 @@ class Profile(TimeStampedUUIDModel):
     is_agent = models.BooleanField(
         verbose_name=_("Agent"), default=False, help_text=_("Are you an agent?")
     )
-    # top_agent = models.BooleanField(verbose_name=_("Top Agent"), default=False)
     rating = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     num_reviews = models.IntegerField(
         verbose_name=_("Number of Reviews"), default=0, null=True, blank=True

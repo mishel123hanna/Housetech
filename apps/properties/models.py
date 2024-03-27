@@ -20,14 +20,14 @@ class PropertyPublishedManager(models.Manager):
         )
     
 # class Location(models.Model):
-    # latitude = gis_models.FloatField(verbose_name=_("Latitude"))
-    # longitude = gis_models.FloatField(verbose_name=_("Longitude"))
-    # city = models.CharField(max_length=50)
-    # region = models.CharField(max_length=50)
-    # street = models.CharField(max_length=50)
+#     latitude = gis_models.FloatField(verbose_name=_("Latitude"))
+#     longitude = gis_models.FloatField(verbose_name=_("Longitude"))
+#     city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
+#     region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
+#     street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
 
-    # def __str__(self):
-    #     return f"{self.region}"
+#     def __str__(self):
+#         return f"{self.city}-{self.region}"
 
 class Property(TimeStampedUUIDModel):
     class PropertyStatus(models.TextChoices):
@@ -41,6 +41,7 @@ class Property(TimeStampedUUIDModel):
         WAREHOUSE = "Warehouse", _("Warehouse")
         COMMERCIAL = "Commercial", _("Commercial")
         OTHER = "Other", _("Other")
+        
     
     user = models.ForeignKey(
             User,
@@ -61,14 +62,14 @@ class Property(TimeStampedUUIDModel):
         default="Default description...update me please....",
     )
     
-    price = models.DecimalField(
-            verbose_name=_("Price"), max_digits=8, decimal_places=2, default=0.0)
+    price = models.IntegerField(
+            verbose_name=_("Price"),default=0)
     plot_area = models.DecimalField(
         verbose_name=_("Plot Area(m^2)"), max_digits=8, decimal_places=2, default=0.0
     )
 
     property_status = models.CharField(
-        verbose_name=_("Advert Type"),
+        verbose_name=_("Property Status"),
         max_length=50,
         choices=PropertyStatus.choices,
         default=PropertyStatus.FOR_SALE,
@@ -97,13 +98,11 @@ class Property(TimeStampedUUIDModel):
     bathrooms = models.IntegerField(verbose_name=_("Bathrooms"), default=1)
     kitchens = models.IntegerField(verbose_name=_("Kitchens"), default=1)
     living_rooms = models.IntegerField(verbose_name=_("Living rooms"), default=1)
-    # location = models.OneToOneField(
+    # location = models.ForeignKey(
     #     Location,
-    #     on_delete=models.CASCADE,
+    #     on_delete=models.DO_NOTHING,
     #     verbose_name=_("Property Location"),
     #     related_name="property_location",
-    #     null=True,
-    #     blank=True,
     # )
     published_status = models.BooleanField(
         verbose_name=_("Published Status"), default=False

@@ -6,6 +6,7 @@ class PropertySerializer(serializers.ModelSerializer):
     cover_photo = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
     property_photos = serializers.SerializerMethodField()
+    # property_location = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -27,12 +28,13 @@ class PropertySerializer(serializers.ModelSerializer):
             "total_floors",
             "bedrooms",
             "bathrooms",
-            "advert_type",
+            "property_status",
             "property_type",
             "cover_photo",
             "published_status",
             "views",
-            "property_photos"
+            "property_photos",
+            # "property_location",
         ]
     def get_user(self, obj):
         return obj.user.email
@@ -45,11 +47,17 @@ class PropertySerializer(serializers.ModelSerializer):
     
     def get_property_photos(self, obj):
         # Retrieve property photos associated with this property
-        property_photos = PropertyPictures.objects.filter(property=obj)
+        property_photos = PropertyPictures.objects.filter(property_id=obj)
         # Serialize property photos data
         return PropertyPicturesSerializer(property_photos, many=True).data
 
-
+    # def get_property_location(self,obj):
+    #     city = obj.location.city
+    #     region = obj.location.region
+    #     street = obj.location.street
+    #     property_location = Location.objects.filter
+    #     return 
+    
 class PropertyCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -67,3 +75,8 @@ class PropertyPicturesSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyPictures
         fields = ['property_id', 'image']  
+
+# class propertyLocationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Location
+#         fields = '__all__'

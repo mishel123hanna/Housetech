@@ -25,7 +25,6 @@ def send_code_on_user_creation(sender, instance, created, **kwargs):
         OneTimePassword.objects.create(user=instance, code=otp_code)
         Profile.objects.create(user=instance)
 
-        # Use send_mail function
         send_mail(
             subject,
             email_body,
@@ -54,7 +53,6 @@ def send_code_on_reset_password_creation(sender, instance, created, **kwargs):
         instance.code = otp_code
         instance.save()
 
-        # Use send_mail function
         send_mail(
             subject,
             email_body,

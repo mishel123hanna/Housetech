@@ -44,7 +44,9 @@ class VerifyUserEmailAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
     def post(self, request):
         otp_code = request.data.get("otp")
+        print(otp_code)
         email = request.data.get("email")
+        print(email)
         try:
             otp_obj = OneTimePassword.objects.get(user__email=email, code=otp_code)
             user = otp_obj.user
