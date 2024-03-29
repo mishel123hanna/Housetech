@@ -10,7 +10,10 @@ from .serializers import (
     UserLoginSerializer,
     PasswordResetSerializer,
     ProfileSerializer,
-    UpdateProfileSerializer
+    UpdateProfileSerializer,
+    VerifyOTPSerializer,
+    LogoutSerializer,
+    PasswordResetConfirmSerializer,
 )
 from rest_framework.response import Response
 from rest_framework import status
@@ -42,32 +45,40 @@ class RegisterUserAPIView(GenericAPIView):
 
 class VerifyUserEmailAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
+    serializer_class = VerifyOTPSerializer
+
     def post(self, request):
-        otp_code = request.data.get("otp")
-        print(otp_code)
-        email = request.data.get("email")
-        print(email)
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"message": "Invalid data provided"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        otp_code = serializer.validated_data.get("otp")
+        email = serializer.validated_data.get("email")
+
         try:
             otp_obj = OneTimePassword.objects.get(user__email=email, code=otp_code)
             user = otp_obj.user
             if not user.is_active:
                 user.is_active = True
                 user.save()
-                otp_obj.delete() 
-                return Response(
-                    {"message": "account verified successfully"},
-                    status=status.HTTP_200_OK,
-                )
+            otp_obj.delete()
             return Response(
-                {"message": "user already verified"},
-                status=status.HTTP_204_NO_CONTENT,
+                {"message": "Account verified successfully"},
+                status=status.HTTP_200_OK
             )
         except OneTimePassword.DoesNotExist:
             return Response(
-                {"message": "passcode is invalid or not associated with the user"}, status=status.HTTP_403_FORBIDDEN
+                {"message": "Passcode is invalid or not associated with the user"},
+                status=status.HTTP_403_FORBIDDEN
             )
-
-
+        except Exception as e:
+            return Response(
+                {"message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 class LoginUserAPIView(GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = (AllowAny,)
@@ -82,7 +93,7 @@ class LoginUserAPIView(GenericAPIView):
 
 class LogoutAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
-
+    serializer_class = LogoutSerializer
     def post(self, request):
         try:
             token = request.auth
@@ -119,6 +130,7 @@ class PasswordResetRequestAPIView(GenericAPIView):
 
 class PasswordResetConfirmAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
+    serializer_class = PasswordResetConfirmSerializer
     def post(self, request):
         email = request.data.get("email", "")
         code = request.data.get("code", "")

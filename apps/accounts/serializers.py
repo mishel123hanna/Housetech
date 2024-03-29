@@ -165,3 +165,13 @@ class CustomEmailBackend(ModelBackend):
          
         else:
             return None
+        
+class VerifyOTPSerializer(serializers.Serializer):
+    otp = serializers.CharField()
+    email = serializers.EmailField()
+
+class LogoutSerializer(serializers.Serializer):
+    pass
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    pass

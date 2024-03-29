@@ -1,5 +1,8 @@
 from django.db import models
 import uuid
+import io
+from PIL import Image
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -163,3 +166,17 @@ class Profile(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"{self.user.get_full_name}'s profile"
+    
+    # def save(self, *args, **kwargs):
+    #     # Open the uploaded image
+    #     image = Image.open(self.profile_photo)
+
+    #     # Convert the image to the desired format (e.g., PNG)
+    #     output = io.BytesIO()
+    #     image.save(output, format='PNG', quality=100)
+    #     output.seek(0)
+
+    #     # Reassign the image field with the converted image
+    #     self.profile_photo = SimpleUploadedFile(self.profile_photo.name, output.getvalue(), content_type='image/png')
+
+    #     super().save(*args, **kwargs)
