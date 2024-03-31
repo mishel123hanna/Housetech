@@ -19,15 +19,16 @@ class PropertyPublishedManager(models.Manager):
             .filter(published_status=True)
         )
     
-# class Location(models.Model):
-#     latitude = gis_models.FloatField(verbose_name=_("Latitude"))
-#     longitude = gis_models.FloatField(verbose_name=_("Longitude"))
-#     city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
-#     region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
-#     street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
+class Location(models.Model):
+    # latitude = gis_models.FloatField(verbose_name=_("Latitude"))
+    # longitude = gis_models.FloatField(verbose_name=_("Longitude"))
+    city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
+    region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
+    street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
 
-#     def __str__(self):
-#         return f"{self.city}-{self.region}"
+
+    def __str__(self):
+        return f"{self.city}-{self.region}"
 
 class Property(TimeStampedUUIDModel):
     class PropertyStatus(models.TextChoices):
@@ -37,9 +38,11 @@ class Property(TimeStampedUUIDModel):
     class PropertyType(models.TextChoices):
         HOUSE = "House", _("House")
         APARTMENT = "Apartment", _("Apartment")
+        VILLA = "Villa", _("Villa")
         OFFICE = "Office", _("Office")
-        WAREHOUSE = "Warehouse", _("Warehouse")
+        CHALET = "Chalet", _("Chalet")
         COMMERCIAL = "Commercial", _("Commercial")
+        FARM = "Farm", _("Farm")
         OTHER = "Other", _("Other")
         
     
@@ -84,9 +87,9 @@ class Property(TimeStampedUUIDModel):
     cover_photo = models.ImageField(
         verbose_name=_("Main Photo"), default="/house.jpeg", null=True, blank=True
     )
-    city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
-    region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
-    street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
+    # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
+    # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
+    # street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
     property_number = models.IntegerField(
         verbose_name=_("Property Number"),
         validators=[MinValueValidator(1)],
@@ -98,12 +101,12 @@ class Property(TimeStampedUUIDModel):
     bathrooms = models.IntegerField(verbose_name=_("Bathrooms"), default=1)
     kitchens = models.IntegerField(verbose_name=_("Kitchens"), default=1)
     living_rooms = models.IntegerField(verbose_name=_("Living rooms"), default=1)
-    # location = models.ForeignKey(
-    #     Location,
-    #     on_delete=models.DO_NOTHING,
-    #     verbose_name=_("Property Location"),
-    #     related_name="property_location",
-    # )
+    location = models.ForeignKey(
+        Location,
+        on_delete=models.DO_NOTHING,
+        verbose_name=_("Property Location"),
+        related_name="property_location",
+    )
     published_status = models.BooleanField(
         verbose_name=_("Published Status"), default=False
     )

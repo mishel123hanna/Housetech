@@ -27,8 +27,10 @@ class PropertyFilter(django_filters.FilterSet):
     )
 
     price = django_filters.NumberFilter()
-    price__gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
-    price__lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
+    price_gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
+    price_lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
+    city = django_filters.CharFilter(field_name="location__city", lookup_expr='iexact')
+    region = django_filters.CharFilter(field_name="location__region", lookup_expr="iexact")
 
     class Meta:
         model = Property
@@ -47,7 +49,7 @@ class ListAllPropertiesAPIView(generics.ListAPIView):
     ]
 
     filterset_class = PropertyFilter
-    search_fields = ["country", "city"]
+    # search_fields = ["city", "region"]
     ordering_fields = ["created_at"]
 
 @api_view(["POST"])

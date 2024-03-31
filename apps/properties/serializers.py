@@ -1,13 +1,18 @@
 from rest_framework import serializers 
-from .models import Property, PropertyViews, PropertyPictures
+from .models import Property, PropertyViews, PropertyPictures, Location
+
+
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ['city', 'region', 'street']
 
 class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     cover_photo = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
     property_photos = serializers.SerializerMethodField()
-    # property_location = serializers.SerializerMethodField()
-
+    location = LocationSerializer()
 
     class Meta:
         model = Property
@@ -19,9 +24,7 @@ class PropertySerializer(serializers.ModelSerializer):
             "slug",
             "ref_code",
             "description",
-            "city",
-            "region",
-            "street",
+            'location',
             "property_number",
             "price",
             "plot_area",
@@ -34,7 +37,6 @@ class PropertySerializer(serializers.ModelSerializer):
             "published_status",
             "views",
             "property_photos",
-            # "property_location",
         ]
     def get_user(self, obj):
         return obj.user.email
@@ -51,12 +53,7 @@ class PropertySerializer(serializers.ModelSerializer):
         # Serialize property photos data
         return PropertyPicturesSerializer(property_photos, many=True).data
 
-    # def get_property_location(self,obj):
-    #     city = obj.location.city
-    #     region = obj.location.region
-    #     street = obj.location.street
-    #     property_location = Location.objects.filter
-    #     return 
+    
     
 class PropertyCreateSerializer(serializers.ModelSerializer):
 
@@ -76,7 +73,3 @@ class PropertyPicturesSerializer(serializers.ModelSerializer):
         model = PropertyPictures
         fields = ['property_id', 'image']  
 
-# class propertyLocationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Location
-#         fields = '__all__'
