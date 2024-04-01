@@ -19,7 +19,7 @@ class PropertyPublishedManager(models.Manager):
             .filter(published_status=True)
         )
     
-class Location(models.Model):
+class Location(TimeStampedUUIDModel):
     # latitude = gis_models.FloatField(verbose_name=_("Latitude"))
     # longitude = gis_models.FloatField(verbose_name=_("Longitude"))
     city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
