@@ -69,3 +69,7 @@ def add_property(request):
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class PropertyCreateAPIView(generics.CreateAPIView):
+    serializer_class = PropertySerializer
+    queryset = Property.objects.all()
