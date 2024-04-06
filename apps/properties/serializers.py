@@ -13,6 +13,8 @@ class PropertySerializer(serializers.ModelSerializer):
     profile_photo = serializers.SerializerMethodField()
     property_photos = serializers.SerializerMethodField()
     location = LocationSerializer()
+    published_status = serializers.BooleanField(read_only=True)
+    views = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Property
@@ -53,7 +55,24 @@ class PropertySerializer(serializers.ModelSerializer):
         # Serialize property photos data
         return PropertyPicturesSerializer(property_photos, many=True).data
 
+    def create(self, validated_data):
+        location_data = validated_data.pop('location')
+        location = Location.objects.create(**location_data)
+        property_instance = Property.objects.create(location=location, **validated_data)
+        return property_instance
     
+    def update(self, instance, validated_data):
+        location_data = validated_data.pop('location')
+        location_serializer = LocationSerializer(instance.location, data=location_data)
+        if location_serializer.is_valid():
+            location_serializer.save()
+        else:
+            raise serializers.ValidationError(location_serializer.errors)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
     
 class PropertyCreateSerializer(serializers.ModelSerializer):
 

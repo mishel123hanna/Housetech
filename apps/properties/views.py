@@ -12,7 +12,7 @@ from .models import Property, PropertyViews
 from .pagination import PropertyPagination
 from .serializers import (PropertyCreateSerializer, PropertySerializer,
                           PropertyViewSerializer)
-
+from .permissions import IsOwnerOrReadOnly
 logger = logging.getLogger(__name__)
 
 
@@ -73,3 +73,14 @@ def add_property(request):
 class PropertyCreateAPIView(generics.CreateAPIView):
     serializer_class = PropertySerializer
     queryset = Property.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = PropertySerializer
+    queryset = Property.objects.all()
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+    lookup_field = 'slug'
