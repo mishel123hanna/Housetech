@@ -9,6 +9,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 
 
+class CustomUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            "first_name", 'last_name'
+        ]
 
 class UserRegisterationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=60, min_length=8, write_only=True)
@@ -129,10 +135,15 @@ class ProfileSerializer(serializers.Serializer):
     
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
-
+    # first_name = serializers.CharField(source = "user.first_name")
+    # last_name = serializers.CharField(source = "user.last_name")
+    user = CustomUserSerializer()
     class Meta:
         model = Profile
         fields = [
+            # "first_name",
+            # "last_name",
+            "user",
             "gender",
             "phone_number",
             "about_me",
@@ -142,7 +153,20 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "is_seller",
             "is_agent",
         ]
-
+    def update(self, instance, validated_data):
+        try:
+            user_data = validated_data.pop('user')
+            user_serializer = CustomUserSerializer(instance.user, data=user_data)
+            if user_serializer.is_valid():
+                user_serializer.save()
+            else:
+                raise serializers.ValidationError(user_serializer.errors)
+        except:
+            pass
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 class CustomEmailBackend(ModelBackend):

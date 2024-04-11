@@ -16,6 +16,10 @@ class PropertyAdmin(admin.ModelAdmin):
 
     location.short_description = "Location"
 
+class PropertyImagesAdmin(admin.ModelAdmin):
+    list_display = ['pkid','property', 'image']
+
 admin.site.register(Location, LocationAdmin)
 admin.site.register(Property, PropertyAdmin)
-admin.site.register([PropertyViews, PropertyPictures])
+admin.site.register(PropertyImages, PropertyImagesAdmin)
+admin.site.register([PropertyViews])

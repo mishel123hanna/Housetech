@@ -85,7 +85,7 @@ class Property(TimeStampedUUIDModel):
         default=PropertyType.OTHER,
     )
     cover_photo = models.ImageField(
-        verbose_name=_("Main Photo"), default="/house.jpeg", null=True, blank=True
+        verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
     )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
@@ -126,13 +126,17 @@ class Property(TimeStampedUUIDModel):
         super(Property, self).save(*args, **kwargs)
 
 
-class PropertyPictures(TimeStampedUUIDModel):
-    property_id = models.ForeignKey(Property, on_delete=models.CASCADE)
-    image = models.ImageField(default="/house.jpg",
-        null=True,
-        blank=True,)
+class PropertyImages(TimeStampedUUIDModel):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='property_images/', null=True, blank=True)
 
-
+    class Meta:
+        verbose_name = "Images For Property"
+        verbose_name_plural = "Property Images"
+    
+    def __str__(self):
+        return f"{self.property.title}-{self.property.property_type}"
+    
 class PropertyViews(TimeStampedUUIDModel):
     ip = models.CharField(verbose_name=_("IP Address"), max_length=250)
     property = models.ForeignKey(

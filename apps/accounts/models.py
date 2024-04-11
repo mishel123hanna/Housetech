@@ -131,7 +131,7 @@ class Profile(TimeStampedUUIDModel):
         verbose_name=_("About me"), default="say something about yourself"
     )
     profile_photo = models.ImageField(
-        verbose_name=_("Profile Photo"), default="/user.png"
+        verbose_name=_("Profile Photo"), default="/user.png", upload_to="user_images/"
     )
     gender = models.CharField(
         verbose_name=_("Gender"),
