@@ -8,10 +8,12 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = ['city', 'region', 'street']
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PropertyImages
-        fields = ['pkid','image'] 
+        fields = ['pkid', 'image']
 
+ 
 class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     # cover_photo = serializers.SerializerMethodField()

@@ -82,6 +82,48 @@ class PropertyCreateAPIView(generics.CreateAPIView):
         for image_data in images_data:
             PropertyImages.objects.create(property=property_instance, image=image_data)
 
+class PropertyImagesCreateAPIView(generics.CreateAPIView):
+    serializer_class = PropertyImagesSerializer
+    queryset = PropertyImages.objects.all()
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def create(self, request, *args, **kwargs):
+        # Get the property ID from the request data
+        property_id = request.data.get('property_id')
+        # property_id = request.data.get('slug')
+        try:
+            # Retrieve the property instance
+            property_instance = Property.objects.get(id=property_id)
+        except Property.DoesNotExist:
+            return Response(
+                {"error": "Property not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get the list of images from the request
+        images = request.FILES.getlist('image')
+
+        # Check if images are provided
+        if not images:
+            return Response(
+                {"error": "No images provided."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create image instances
+        image_instances = []
+        for image in images:
+            # Create an image instance with the provided property and image
+            image_instance = PropertyImages(property=property_instance, image=image)
+            image_instances.append(image_instance)
+
+        # Save all image instances in one go
+        PropertyImages.objects.bulk_create(image_instances)
+
+        # Return a success response with the created images' data
+        serializer = self.get_serializer(image_instances, many=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
 class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     queryset = Property.objects.all()
@@ -90,19 +132,19 @@ class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
 
     def perform_update(self, serializer):
         property_instance = serializer.save(user=self.request.user)
-        images_data = self.request.data.get('images', [])
-        pkid = self.request.data.get('pkid')
+        # images_data = self.request.data.get('images', [])
+        # pkid = self.request.data.get('pkid')
         
-        if pkid is not None:
-            PropertyImages.objects.filter(property = property_instance, pkid=pkid).update(image=images_data)
-        else:
-            images_data = self.request.FILES.getlist('images')
-            for image_data in images_data:
-                PropertyImages.objects.create(property=property_instance, image=image_data)
-            # PropertyImages.objects.filter(property = property_instance).create(image = images_data)
-            # Handle the case if pkid is not provided
-            # You may want to raise an error or handle this case differently based on your requirements
-            pass
+        # if pkid is not None:
+        #     PropertyImages.objects.filter(property = property_instance, pkid=pkid).update(image=images_data)
+        # else:
+        #     images_data = self.request.FILES.getlist('images')
+        #     for image_data in images_data:
+        #         PropertyImages.objects.create(property=property_instance, image=image_data)
+        #     # PropertyImages.objects.filter(property = property_instance).create(image = images_data)
+        #     # Handle the case if pkid is not provided
+        #     # You may want to raise an error or handle this case differently based on your requirements
+        #     pass
         # images_data = self.request.FILES.getlist('images')
         # for image_data in images_data:
         #     PropertyImages.objects.update(property=property_instance, image=image_data)
