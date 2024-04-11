@@ -85,7 +85,8 @@ class Property(TimeStampedUUIDModel):
         default=PropertyType.OTHER,
     )
     cover_photo = models.ImageField(
-        verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
+        # verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
+        verbose_name=_("Main Photo"), default="/house.jpg", null=True, blank=True
     )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
