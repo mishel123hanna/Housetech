@@ -78,9 +78,9 @@ class PropertyCreateAPIView(generics.CreateAPIView):
     def perform_create(self, serializer):
         property_instance = serializer.save(user=self.request.user)
 
-        images_data = self.request.FILES.getlist('images')
-        for image_data in images_data:
-            PropertyImages.objects.create(property=property_instance, image=image_data)
+        # images_data = self.request.FILES.getlist('images')
+        # for image_data in images_data:
+        #     PropertyImages.objects.create(property=property_instance, image=image_data)
 
 class PropertyImagesCreateAPIView(generics.CreateAPIView):
     serializer_class = PropertyImagesSerializer
