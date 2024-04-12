@@ -166,10 +166,16 @@ class UserProperties(generics.ListAPIView):
     serializer_class = PropertySerializer
 
     def get_queryset(self):
-        user = self.request.user
-        results = user.owner.all()
-        return results
-       
+            user = self.request.user
+            return user.owner.all()  
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        if queryset.exists():
+            return super().list(request, *args, **kwargs)
+        else:
+            return Response({"success":False,"message": "No properties for user"}, status=status.HTTP_200_OK)
 
 # from rest_framework.decorators import api_view, permission_classes
 
