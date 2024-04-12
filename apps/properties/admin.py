@@ -8,7 +8,7 @@ class LocationAdmin(admin.ModelAdmin):
     list_filter = ['city', 'region']
 
 class PropertyAdmin(admin.ModelAdmin):
-    list_display = ["title", "property_status", "property_type", "location"]
+    list_display = ["user","title", "property_status", "property_type", "location"]
     list_filter = ["property_status", "property_type", "location__city", "location__region"]
 
     def location(self, obj):

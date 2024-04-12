@@ -71,9 +71,9 @@ def add_property(request):
 
 
 class PropertyCreateAPIView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
     serializer_class = PropertySerializer
     queryset = Property.objects.all()
-    permission_classes = (IsAuthenticated,)
 
     def perform_create(self, serializer):
         property_instance = serializer.save(user=self.request.user)
@@ -83,9 +83,9 @@ class PropertyCreateAPIView(generics.CreateAPIView):
         #     PropertyImages.objects.create(property=property_instance, image=image_data)
 
 class PropertyImagesCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
     serializer_class = PropertyImagesSerializer
     queryset = PropertyImages.objects.all()
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     def create(self, request, *args, **kwargs):
         # Get the property ID from the request data
@@ -151,12 +151,33 @@ class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
 
 
 class PropertyImageDelete(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = PropertyImagesSerializer
     queryset = PropertyImages.objects.all()
-    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
     lookup_field = 'pkid'
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"message":"Image deleted successfully"}, status=status.HTTP_200_OK)
+    
+class UserProperties(generics.ListAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PropertySerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        results = user.owner.all()
+        return results
+       
+
+# from rest_framework.decorators import api_view, permission_classes
+
+# @api_view(['GET'])
+# def get_user_properties(request):
+#     user = request.user
+#     print(user)
+#     properties = user.owner.all()
+#     serializer = PropertySerializer(properties, many=True) 
+
+#     return Response(serializer.data, status=status.HTTP_200_OK)

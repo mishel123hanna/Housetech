@@ -10,12 +10,30 @@ from django.contrib.auth.backends import ModelBackend
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
+    email = serializers.EmailField(read_only=True, required=False)
+
     class Meta:
         model = CustomUser
         fields = [
-            "first_name", 'last_name'
+            "first_name", 'last_name', 'email', 'password'
         ]
 
+    
+
+    def update(self, instance, validated_data):
+        if 'password' in validated_data:
+            password = validated_data.pop('password')
+            instance.set_password(password)
+        # if 'email' in validated_data:
+        #     # Handle unique constraint validation for email field
+        #     new_email = validated_data['email']
+        #     if new_email != instance.email and CustomUser.objects.filter(email=new_email).exists():
+        #         raise serializers.ValidationError({'email': 'A user with this email already exists.'})
+
+        # Update remaining validated data
+        return super().update(instance, validated_data)
+    
 class UserRegisterationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=60, min_length=8, write_only=True)
     password2 = serializers.CharField(max_length=60, min_length=8, write_only=True)
@@ -57,9 +75,8 @@ class UserLoginSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
         request = self.context.get("request")
-        print(request)
+        
         user = authenticate(request, email=email, password=password)
-        print(user)
         if not user:
             raise AuthenticationFailed("invalid credentials try again")
         if not user.is_active:
@@ -185,7 +202,7 @@ class CustomEmailBackend(ModelBackend):
             return user
         elif user.check_password(password) and not user.is_active:
             # Handle inactive users here (optional)
-            raise AuthenticationFailed("Email is not Verified")
+            raise AuthenticationFailed({'message':"Email is not Verified", 'success':False})
          
         else:
             return None
