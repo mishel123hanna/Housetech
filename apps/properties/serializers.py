@@ -18,6 +18,7 @@ class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     # cover_photo = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
+    phone_number = serializers.SerializerMethodField()
     # property_photos = serializers.SerializerMethodField()
     images = PropertyImagesSerializer(many=True, read_only=True)
     location = LocationSerializer()
@@ -29,7 +30,10 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
+            "created_at",
+            "updated_at",
             "profile_photo",
+            "phone_number",
             "title",
             "slug",
             "ref_code",
@@ -60,6 +64,8 @@ class PropertySerializer(serializers.ModelSerializer):
     def get_profile_photo(self, obj):
         return obj.user.profile.profile_photo.url
     
+    def get_phone_number(self, obj):
+        return obj.user.profile.phone_number
     # def get_property_photos(self, obj):
     #     # Retrieve property photos associated with this property
     #     property_photos = PropertyImages.objects.filter(property_id=obj)
