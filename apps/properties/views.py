@@ -21,10 +21,14 @@ class PropertyFilter(django_filters.FilterSet):
     property_status = django_filters.CharFilter(
         field_name="property_status", lookup_expr="iexact"
     )
+    rent_type = django_filters.CharFilter(
+        field_name="rent_type", lookup_expr="iexact"
+    )
 
     property_type = django_filters.CharFilter(
         field_name="property_type", lookup_expr="iexact"
     )
+    total_rooms = django_filters.NumberFilter()
 
     price = django_filters.NumberFilter()
     price_gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
