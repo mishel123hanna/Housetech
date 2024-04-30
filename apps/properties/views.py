@@ -29,6 +29,10 @@ class PropertyFilter(django_filters.FilterSet):
         field_name="property_type", lookup_expr="iexact"
     )
     total_rooms = django_filters.NumberFilter()
+    furnishing = django_filters.CharFilter(field_name="furnishing", lookup_expr="exact")
+    solar_panels = django_filters.BooleanFilter()
+    pool = django_filters.BooleanFilter()
+    elevator = django_filters.BooleanFilter()
 
     price = django_filters.NumberFilter()
     price_gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
