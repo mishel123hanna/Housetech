@@ -30,6 +30,7 @@ class PropertyFilter(django_filters.FilterSet):
     )
     total_rooms = django_filters.NumberFilter()
     furnishing = django_filters.CharFilter(field_name="furnishing", lookup_expr="exact")
+    covering = django_filters.CharFilter(field_name="covering", lookup_expr="exact")
     solar_panels = django_filters.BooleanFilter()
     pool = django_filters.BooleanFilter()
     elevator = django_filters.BooleanFilter()
