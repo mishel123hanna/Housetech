@@ -30,6 +30,7 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "user",
+            "user_type",
             "created_at",
             "updated_at",
             "profile_photo",
