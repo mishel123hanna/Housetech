@@ -84,6 +84,10 @@ class Property(TimeStampedUUIDModel):
         MONTHLY = "شهري", _("شهري")
         DAILY = "يومي", _("يومي")
 
+    class UserType(models.TextChoices):
+        OWNER = "مالك", _("مالك")
+        MERCHANT = "تاجر", _("تاجر")
+
     user = models.ForeignKey(
             User,
             verbose_name=_("Agent,Seller or Buyer"),
@@ -123,6 +127,7 @@ class Property(TimeStampedUUIDModel):
         default=PropertyType.OTHER,
     )
     ownership_type = models.CharField(verbose_name=_("نوع الملكية"), max_length=50, choices=OwnershipType.choices, default=OwnershipType.A)
+    user_type = models.CharField(verbose_name=_("نوع البائع"), max_length=50, choices=UserType.choices, default=UserType.OWNER)
     covering = models.CharField(verbose_name=_("الاكساء"), max_length=20, choices=Covering.choices, default=Covering.GOOD)
     cover_photo = models.ImageField(
         verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
