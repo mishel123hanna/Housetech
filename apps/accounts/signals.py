@@ -3,7 +3,7 @@ import random
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
-
+import threading
 from django.conf import settings
 from .models import CustomUser, OneTimePassword, PasswordResetCode, Profile
 
@@ -25,13 +25,20 @@ def send_code_on_user_creation(sender, instance, created, **kwargs):
         OneTimePassword.objects.create(user=instance, code=otp_code)
         Profile.objects.create(user=instance)
 
-        send_mail(
+        threading.Thread(target=send_mail,args=(
             subject,
             email_body,
             from_email,
             to_email,
-            fail_silently=True,
-        )
+          
+        )).start()
+        # send_mail(
+        #     subject,
+        #     email_body,
+        #     from_email,
+        #     to_email,
+        #     fail_silently=True,
+        # )
 
 
 def generate_otp():
