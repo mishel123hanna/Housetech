@@ -8,15 +8,15 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = ['city', 'region', 'street']
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
+    property = serializers.PrimaryKeyRelatedField(queryset=Property.objects.all())
 
     class Meta:
         model = PropertyImages
-        fields = ['pkid', 'image']
+        fields = ['pkid', 'image', 'property']
 
  
 class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    # cover_photo = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
     phone_number = serializers.SerializerMethodField()
     # property_photos = serializers.SerializerMethodField()
@@ -60,7 +60,7 @@ class PropertySerializer(serializers.ModelSerializer):
             "direction",
             "total_rooms",
             "rent_type",
-            "cover_photo",
+            # "cover_photo",
             "published_status",
             "views",
             # "property_photos",
@@ -69,9 +69,7 @@ class PropertySerializer(serializers.ModelSerializer):
     def get_user(self, obj):
         return obj.user.email
     
-    # def get_cover_photo(self, obj):
-    #     return obj.cover_photo.url
-    
+  
     def get_profile_photo(self, obj):
         return obj.user.profile.profile_photo.url
     
@@ -113,6 +111,18 @@ class PropertySerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+    def to_representation(self, instance):
+        """
+        Customize the serialized representation of the instance.
+        """
+        data = super().to_representation(instance)
+
+        # If property is not for sale, remove the ownership_type field
+        if instance.property_status != "For Sale":
+            data.pop("ownership_type")
+
+        return data
     # def update(self, instance, validated_data):
     #     images_data = validated_data.pop('images', [])
 

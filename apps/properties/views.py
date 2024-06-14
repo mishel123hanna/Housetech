@@ -12,7 +12,7 @@ from .models import Property, PropertyViews, PropertyImages
 from .pagination import PropertyPagination
 from .serializers import (PropertyCreateSerializer, PropertySerializer,
                           PropertyViewSerializer, PropertyImagesSerializer)
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsOwnerOfProperty
 logger = logging.getLogger(__name__)
 
 
@@ -92,7 +92,7 @@ class PropertyCreateAPIView(generics.CreateAPIView):
         #     PropertyImages.objects.create(property=property_instance, image=image_data)
 
 class PropertyImagesCreateAPIView(generics.CreateAPIView):
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = (IsAuthenticated, IsOwnerOfProperty)
     serializer_class = PropertyImagesSerializer
     queryset = PropertyImages.objects.all()
 

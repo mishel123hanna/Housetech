@@ -129,9 +129,9 @@ class Property(TimeStampedUUIDModel):
     ownership_type = models.CharField(verbose_name=_("نوع الملكية"), max_length=50, choices=OwnershipType.choices, default=OwnershipType.A)
     user_type = models.CharField(verbose_name=_("نوع البائع"), max_length=50, choices=UserType.choices, default=UserType.OWNER)
     covering = models.CharField(verbose_name=_("الاكساء"), max_length=20, choices=Covering.choices, default=Covering.GOOD)
-    cover_photo = models.ImageField(
-        verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
-    )
+    # cover_photo = models.ImageField(
+    #     verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
+    # )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
     # street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
