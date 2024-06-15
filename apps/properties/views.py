@@ -158,7 +158,20 @@ class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
         # for image_data in images_data:
         #     PropertyImages.objects.update(property=property_instance, image=image_data)
 
-
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(",")[0]
+        else:
+            ip = request.META.get("REMOTE_ADDR")
+        if not PropertyViews.objects.filter(property=instance, ip=ip).exists():
+            PropertyViews.objects.create(property=instance, ip=ip)
+            instance.views += 1
+            instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
 class PropertyImageDelete(generics.DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = PropertyImagesSerializer
