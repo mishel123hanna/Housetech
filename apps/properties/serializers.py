@@ -60,7 +60,7 @@ class PropertySerializer(serializers.ModelSerializer):
             "direction",
             "total_rooms",
             "rent_type",
-            # "cover_photo",
+            "cover_photo",
             "published_status",
             "views",
             # "property_photos",

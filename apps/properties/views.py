@@ -136,7 +136,7 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
 class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     queryset = Property.objects.all()
-    permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
+    permission_classes = (IsOwnerOrReadOnly,)
     lookup_field = 'slug'
 
     def perform_update(self, serializer):
