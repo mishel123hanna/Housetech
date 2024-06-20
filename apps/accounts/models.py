@@ -164,6 +164,22 @@ class Profile(TimeStampedUUIDModel):
         verbose_name=_("Number of Reviews"), default=0, null=True, blank=True
     )
 
+    preferred_locations = models.CharField(max_length=255, null=True, blank=True)  # Using comma-separated values
+
+    @property
+    def preferred_locations_list(self):
+        if self.preferred_locations:
+            return self.preferred_locations.split(',')
+        return []
+
+    @preferred_locations_list.setter
+    def preferred_locations_list(self, value):
+        if isinstance(value, list):
+            self.preferred_locations = ','.join(value)
+        else:
+            raise ValueError("Preferred locations must be a list")
+
+
     def __str__(self):
         return f"{self.user.get_full_name}'s profile"
     

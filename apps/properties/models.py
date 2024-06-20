@@ -4,12 +4,13 @@ from django.db import models
 # from django.contrib.gis.db import models as gis_models
 # from django.contrib.gis.geos import Point
 from django.core.validators import MinValueValidator
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from autoslug import AutoSlugField
 from apps.utils.models import TimeStampedUUIDModel
-
-User = get_user_model()
+from project import settings
+# User = get_user_model()
+User = settings.AUTH_USER_MODEL
 
 class PropertyPublishedManager(models.Manager):
     def get_queryset(self):

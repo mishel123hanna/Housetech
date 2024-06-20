@@ -194,7 +194,7 @@ class GetProfileAPIView(GenericAPIView):
         return Response({"profile":serializer.data}, status=status.HTTP_200_OK)
     
 class UpdateProfileAPIView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     serializer_class = UpdateProfileSerializer
 

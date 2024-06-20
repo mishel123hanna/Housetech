@@ -57,6 +57,10 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'phone_number', 'city', 'gender']
     list_display_links = ['id', 'user']
     list_filter = ['gender', 'city']
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(ProfileAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields['preferred_locations'].required = False
+        return form
 
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(CustomUser, UserAdmin)

@@ -124,7 +124,9 @@ class ProfileSerializer(serializers.Serializer):
     rating = serializers.DecimalField(max_digits=4, decimal_places=2)
     num_reviews = serializers.IntegerField()
     full_name = serializers.SerializerMethodField(read_only=True)
-
+    preferred_locations = serializers.ListField(
+            child=serializers.CharField(), required=False, source='preferred_locations_list'
+        )
     class Meta:
         model = Profile
         fields = [
@@ -143,6 +145,7 @@ class ProfileSerializer(serializers.Serializer):
             "rating",
             "num_reviews",
             "reviews",
+            'preferred_locations',
         ]
     
     def get_full_name(self, obj):
@@ -155,6 +158,10 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     # first_name = serializers.CharField(source = "user.first_name")
     # last_name = serializers.CharField(source = "user.last_name")
     user = CustomUserSerializer()
+    preferred_locations = serializers.ListField(
+            child=serializers.CharField(), required=False, source='preferred_locations_list'
+        )
+
     class Meta:
         model = Profile
         fields = [
@@ -169,20 +176,25 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "is_buyer",
             "is_seller",
             "is_agent",
+            'preferred_locations',
+
         ]
     def update(self, instance, validated_data):
-        try:
-            user_data = validated_data.pop('user')
-            user_serializer = CustomUserSerializer(instance.user, data=user_data)
+        user_data = validated_data.pop('user', None)
+        preferred_locations_data = validated_data.pop('preferred_locations_list', None)
+
+        if user_data:
+            user_serializer = CustomUserSerializer(instance.user, data=user_data, partial=True)
             if user_serializer.is_valid():
                 user_serializer.save()
-            else:
-                raise serializers.ValidationError(user_serializer.errors)
-        except:
-            pass
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+
+        if preferred_locations_data is not None:
+            instance.preferred_locations = ','.join(preferred_locations_data)
+            instance.save()
         return instance
 
 
