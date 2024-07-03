@@ -13,6 +13,7 @@ from .pagination import PropertyPagination
 from .serializers import (PropertyCreateSerializer, PropertySerializer,
                           PropertyViewSerializer, PropertyImagesSerializer)
 from .permissions import IsOwnerOrReadOnly, IsOwnerOfProperty
+import threading
 logger = logging.getLogger(__name__)
 
 
@@ -133,6 +134,52 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
         serializer = self.get_serializer(image_instances, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+# upload images using threading
+
+# class PropertyImagesCreateAPIView(generics.CreateAPIView):
+#     permission_classes = (IsAuthenticated, IsOwnerOfProperty)
+#     serializer_class = PropertyImagesSerializer
+#     queryset = PropertyImages.objects.all()
+
+#     def create(self, request, *args, **kwargs):
+#         property_id = request.data.get('property_id')
+#         try:
+#             property_instance = Property.objects.get(id=property_id)
+#         except Property.DoesNotExist:
+#             return Response(
+#                 {"error": "Property not found."},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+
+#         images = request.FILES.getlist('image')
+#         if not images:
+#             return Response(
+#                 {"error": "No images provided."},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         # Read files into memory
+#         image_files = []
+#         for image in images:
+#             image_files.append((image.name, image.read()))
+
+#         # Start a thread to save image instances
+#         threading.Thread(target=self.save_images, args=(property_instance, image_files)).start()
+
+#         return Response({"message": "Images are being uploaded."}, status=status.HTTP_201_CREATED)
+
+#     def save_images(self, property_instance, image_files):
+#         image_instances = []
+#         for name, content in image_files:
+#             # Create an in-memory file object
+#             from django.core.files.base import ContentFile
+#             in_memory_file = ContentFile(content, name=name)
+
+#             # Create an image instance with the provided property and in-memory file
+#             image_instance = PropertyImages(property=property_instance, image=in_memory_file)
+#             image_instance.save()
+#             image_instances.append(image_instance)
+
 class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     queryset = Property.objects.all()

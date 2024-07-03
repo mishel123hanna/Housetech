@@ -18,13 +18,13 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-class FCMTokenViewSet(viewsets.ModelViewSet):
-    queryset = FCMToken.objects.all()
-    serializer_class = FCMTokenSerializer
-    permission_classes = [IsAuthenticated]
+# class FCMTokenViewSet(viewsets.ModelViewSet):
+#     queryset = FCMToken.objects.all()
+#     serializer_class = FCMTokenSerializer
+#     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return self.queryset.filter(user=self.request.user)
+#     def get_queryset(self):
+#         return self.queryset.filter(user=self.request.user)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
