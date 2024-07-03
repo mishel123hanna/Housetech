@@ -1,5 +1,6 @@
 from rest_framework import serializers 
 from .models import Property, PropertyViews, PropertyImages, Location
+from django.conf import settings
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -9,11 +10,13 @@ class LocationSerializer(serializers.ModelSerializer):
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
     property = serializers.PrimaryKeyRelatedField(queryset=Property.objects.all())
-
+    image_url = serializers.SerializerMethodField()
     class Meta:
         model = PropertyImages
-        fields = ['pkid', 'image', 'property']
+        fields = ['pkid', 'image','image_url', 'property']
 
+    def get_image_url(self,obj):
+        return f"{settings.CLOUDINARY_BASE_URL}/{obj.image}"
  
 class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()

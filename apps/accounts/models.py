@@ -15,6 +15,8 @@ from django.utils.translation import gettext_lazy as _
 # from rest_framework_simplejwt.tokens import RefreshToken
 # from phonenumber_field.modelfields import PhoneNumberField
 from apps.utils.models import TimeStampedUUIDModel
+from cloudinary.models import CloudinaryField
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -130,8 +132,8 @@ class Profile(TimeStampedUUIDModel):
     about_me = models.TextField(
         verbose_name=_("About me"), default="say something about yourself"
     )
-    profile_photo = models.ImageField(
-        verbose_name=_("Profile Photo"), default="/user.png", upload_to="user_images/"
+    profile_photo = CloudinaryField(
+        verbose_name=_("Profile Photo"), default="/user.png"
     )
     gender = models.CharField(
         verbose_name=_("Gender"),

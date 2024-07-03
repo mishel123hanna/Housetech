@@ -9,7 +9,12 @@ from django.utils.translation import gettext_lazy as _
 from autoslug import AutoSlugField
 from apps.utils.models import TimeStampedUUIDModel
 from project import settings
+from cloudinary.models import CloudinaryField
+
+
 # User = get_user_model()
+
+
 User = settings.AUTH_USER_MODEL
 
 class PropertyPublishedManager(models.Manager):
@@ -130,8 +135,8 @@ class Property(TimeStampedUUIDModel):
     ownership_type = models.CharField(verbose_name=_("نوع الملكية"), max_length=50, choices=OwnershipType.choices, default=OwnershipType.A)
     user_type = models.CharField(verbose_name=_("نوع البائع"), max_length=50, choices=UserType.choices, default=UserType.OWNER)
     covering = models.CharField(verbose_name=_("الاكساء"), max_length=20, choices=Covering.choices, default=Covering.GOOD)
-    cover_photo = models.ImageField(
-        verbose_name=_("Main Photo"), upload_to="property_main_images/", default="/house.jpg", null=True, blank=True
+    cover_photo = CloudinaryField(
+        verbose_name=_("Main Photo"), default="/house.jpg", null=True, blank=True
     )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
@@ -185,7 +190,7 @@ class Property(TimeStampedUUIDModel):
 
 class PropertyImages(TimeStampedUUIDModel):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
-    image = models.ImageField(upload_to='property_images/', null=True, blank=True)
+    image = CloudinaryField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Images For Property"
