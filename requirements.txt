@@ -51,4 +51,4 @@ googleapis-common-protos==1.62.0
 grpcio==1.64.1
 grpcio-status==1.62.2
 django-cloudinary-storage==0.3.0
-debugpy==1.8.1
+debugpy==1.8.2
