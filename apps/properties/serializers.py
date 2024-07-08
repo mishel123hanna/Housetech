@@ -27,6 +27,9 @@ class PropertySerializer(serializers.ModelSerializer):
     location = LocationSerializer()
     published_status = serializers.BooleanField(read_only=True)
     views = serializers.IntegerField(read_only=True)
+    is_favorite = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Property
@@ -67,6 +70,8 @@ class PropertySerializer(serializers.ModelSerializer):
             "published_status",
             "views",
             # "property_photos",
+            "is_favorite",
+            "is_owner",
             "images",
         ]
     def get_user(self, obj):
@@ -78,6 +83,19 @@ class PropertySerializer(serializers.ModelSerializer):
     
     def get_phone_number(self, obj):
         return obj.user.profile.phone_number
+    
+    def get_is_favorite(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return UserPropertyFavorite.objects.filter(user=user, property=obj).exists()
+        return False
+    
+    def get_is_owner(self,obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return obj.user == user
+        return False
+
     # def get_property_photos(self, obj):
     #     # Retrieve property photos associated with this property
     #     property_photos = PropertyImages.objects.filter(property_id=obj)
@@ -182,7 +200,6 @@ class PropertyViewSerializer(serializers.ModelSerializer):
 
 class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
     property = PropertySerializer(read_only=True)
-
     class Meta:
         model = UserPropertyFavorite
         fields = ['property']
