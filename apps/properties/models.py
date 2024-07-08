@@ -38,20 +38,20 @@ class Location(TimeStampedUUIDModel):
 
 class Property(TimeStampedUUIDModel):
     class PropertyStatus(models.TextChoices):
-        FOR_SALE = "For Sale", _("بيع")
-        FOR_RENT = "For Rent", _("أجار")
+        FOR_SALE = "للبيع", _("للبيع")
+        FOR_RENT = "للأجار", _("للأجار")
 
     class PropertyType(models.TextChoices):
-        HOUSE = "House", _("بيت")
-        APARTMENT = "Apartment", _("شقة")
-        VILLA = "Villa", _("فيلا")
-        OFFICE = "Office", _("مكتب")
-        CHALET = "Chalet", _("شاليه")
-        COMMERCIAL = "Market", _("تجاري")
-        FARM = "Farm", _("مزرعة")
-        BUILDING = "Building", _("بناء")
-        LAND = "Land", _("أرض")
-        OTHER = "Other", _("اخر")
+        HOUSE = "بيت", _("بيت")
+        APARTMENT = "شقة", _("شقة")
+        VILLA = "فيلا", _("فيلا")
+        OFFICE = "مكتب", _("مكتب")
+        CHALET = "شاليه", _("شاليه")
+        COMMERCIAL = "تجاري", _("تجاري")
+        FARM = "مزرعة", _("مزرعة")
+        BUILDING = "بناء", _("بناء")
+        LAND = "أرض", _("أرض")
+        OTHER = "اخر", _("اخر")
         
     class OwnershipType(models.TextChoices):
         A = "طابو أخضر", _("طابو أخضر")
@@ -136,7 +136,7 @@ class Property(TimeStampedUUIDModel):
     user_type = models.CharField(verbose_name=_("نوع البائع"), max_length=50, choices=UserType.choices, default=UserType.OWNER)
     covering = models.CharField(verbose_name=_("الاكساء"), max_length=20, choices=Covering.choices, default=Covering.GOOD)
     cover_photo = CloudinaryField(
-        verbose_name=_("Main Photo"), default="/house.jpg", null=True, blank=True
+        verbose_name=_("Main Photo"), default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397484/dgdtgymdj0nuqcooi4ko.jpg", null=True, blank=True
     )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
@@ -213,3 +213,11 @@ class PropertyViews(TimeStampedUUIDModel):
     class Meta:
         verbose_name = "Total Views on Property"
         verbose_name_plural = "Total Property Views"
+
+
+class UserPropertyFavorite(TimeStampedUUIDModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    property = models.ForeignKey(Property, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'property')

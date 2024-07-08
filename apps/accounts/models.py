@@ -16,8 +16,18 @@ from django.utils.translation import gettext_lazy as _
 # from phonenumber_field.modelfields import PhoneNumberField
 from apps.utils.models import TimeStampedUUIDModel
 from cloudinary.models import CloudinaryField
+# import cloudinary.uploader
+# import os
+# from django.conf import settings
 
+# image_path = os.path.join(settings.BASE_DIR, 'mediafiles', 'user.png')
 
+# # Upload the image to Cloudinary
+# result = cloudinary.uploader.upload(image_path)
+
+# # Get the URL of the uploaded image
+# default_image_url = result['secure_url']
+# print("Default Image URL:", default_image_url)
 
 class CustomUserManager(BaseUserManager):
     def email_validator(self, email):
@@ -96,10 +106,6 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-    # def tokens(self):
-    #     refresh = RefreshToken.for_user(self)
-    #     return {"refresh": str(refresh), "access": str(refresh.access_token)}
-
 
 class OneTimePassword(models.Model):
     user = models.OneToOneField(
@@ -133,7 +139,7 @@ class Profile(TimeStampedUUIDModel):
         verbose_name=_("About me"), default="say something about yourself"
     )
     profile_photo = CloudinaryField(
-        verbose_name=_("Profile Photo"), default="/user.png"
+        verbose_name=_("Profile Photo"), default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397486/h6boanvk8x1946dazyll.png"
     )
     gender = models.CharField(
         verbose_name=_("Gender"),

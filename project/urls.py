@@ -13,7 +13,11 @@ urlpatterns = [
     path("", include("apps.utils.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+    ]
 
 admin.site.site_header = "Housetech Admin"
 admin.site.site_title = "Housetech Admin Portal"

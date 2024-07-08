@@ -1,5 +1,6 @@
 import logging
 
+from django.shortcuts import get_object_or_404
 import django_filters
 from django.db.models import query
 from django_filters.rest_framework import DjangoFilterBackend
@@ -8,10 +9,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Property, PropertyViews, PropertyImages
+from rest_framework.exceptions import ValidationError
+from .models import Property, PropertyViews, PropertyImages, UserPropertyFavorite
 from .pagination import PropertyPagination
 from .serializers import (PropertyCreateSerializer, PropertySerializer,
-                          PropertyViewSerializer, PropertyImagesSerializer)
+                          PropertyViewSerializer, PropertyImagesSerializer, UserPropertyFavoriteSerializer)
 from .permissions import IsOwnerOrReadOnly, IsOwnerOfProperty
 import threading
 logger = logging.getLogger(__name__)
@@ -98,11 +100,8 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
     queryset = PropertyImages.objects.all()
 
     def create(self, request, *args, **kwargs):
-        # Get the property ID from the request data
         property_id = request.data.get('property_id')
-        # property_id = request.data.get('slug')
         try:
-            # Retrieve the property instance
             property_instance = Property.objects.get(id=property_id)
         except Property.DoesNotExist:
             return Response(
@@ -110,7 +109,7 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Get the list of images from the request
+
         images = request.FILES.getlist('image')
 
         # Check if images are provided
@@ -119,18 +118,16 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
                 {"error": "No images provided."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Create image instances
+     
         image_instances = []
-        for image in images:
-            # Create an image instance with the provided property and image
+        for image in images:          
             image_instance = PropertyImages(property=property_instance, image=image)
             image_instances.append(image_instance)
 
-        # Save all image instances in one go
+        
         PropertyImages.objects.bulk_create(image_instances)
 
-        # Return a success response with the created images' data
+
         serializer = self.get_serializer(image_instances, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
@@ -256,3 +253,36 @@ class UserProperties(generics.ListAPIView):
 #     serializer = PropertySerializer(properties, many=True) 
 
 #     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserPropertyFavoriteListCreateView(generics.ListCreateAPIView):
+    serializer_class = UserPropertyFavoriteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return UserPropertyFavorite.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        property_id = self.request.data.get('property_id')
+        property_instance = get_object_or_404(Property, id=property_id)
+        user = self.request.user
+        if UserPropertyFavorite.objects.filter(user=user, property=property_instance).exists():
+            raise ValidationError("You have already added this property to your favorites.")
+        serializer.save(user=user, property=property_instance)
+
+class UserPropertyFavoriteDeleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, format=None):
+        property_id = self.request.data.get('property_id')
+        property_instance = Property.objects.get(id=property_id)
+        favorite = get_object_or_404(UserPropertyFavorite, user=request.user, property=property_instance)
+        favorite.delete()
+        return Response(status=204)
+    
+
+# from django.urls import resolve
+# from django.http import HttpResponse
+# def debug_url_patterns(request):
+#     match = resolve(request.path_info)
+#     return HttpResponse(f"URL Name: {match.url_name}, View: {match.func.__name__}")

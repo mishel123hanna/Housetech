@@ -1,5 +1,5 @@
 from rest_framework import serializers 
-from .models import Property, PropertyViews, PropertyImages, Location
+from .models import Property, PropertyViews, PropertyImages, Location, UserPropertyFavorite
 from django.conf import settings
 
 
@@ -10,12 +10,12 @@ class LocationSerializer(serializers.ModelSerializer):
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
     property = serializers.PrimaryKeyRelatedField(queryset=Property.objects.all())
-    image_url = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
     class Meta:
         model = PropertyImages
-        fields = ['pkid', 'image','image_url', 'property']
+        fields = ['pkid','image', 'property']
 
-    def get_image_url(self,obj):
+    def get_image(self,obj):
         return f"{settings.CLOUDINARY_BASE_URL}/{obj.image}"
  
 class PropertySerializer(serializers.ModelSerializer):
@@ -166,3 +166,33 @@ class PropertyViewSerializer(serializers.ModelSerializer):
 
 
 
+# class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
+#     property = PropertySerializer(many=True)
+#     class Meta:
+#         model = UserPropertyFavorite
+#         fields = ['property']
+
+
+# class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
+#     property = serializers.PrimaryKeyRelatedField(queryset=Property.objects.all())
+
+#     class Meta:
+#         model = UserPropertyFavorite
+#         fields = ['property']
+
+class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
+    property = PropertySerializer(read_only=True)
+
+    class Meta:
+        model = UserPropertyFavorite
+        fields = ['property']
+
+    # def validate(self, data):
+    #     user = self.context['request'].user
+    #     property_instance = data['property']
+
+    #     # Check if the user already has this property in their favorites
+    #     if UserPropertyFavorite.objects.filter(user=user, property=property_instance).exists():
+    #         raise ValidationError("You have already added this property to your favorites.")
+
+    #     return data

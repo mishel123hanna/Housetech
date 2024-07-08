@@ -23,4 +23,4 @@ class PropertyImagesAdmin(admin.ModelAdmin):
 admin.site.register(Location, LocationAdmin)
 admin.site.register(Property, PropertyAdmin)
 admin.site.register(PropertyImages, PropertyImagesAdmin)
-admin.site.register([PropertyViews])
+admin.site.register([PropertyViews, UserPropertyFavorite])
