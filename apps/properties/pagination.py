@@ -2,4 +2,6 @@ from rest_framework.pagination import PageNumberPagination
 
 
 class PropertyPagination(PageNumberPagination):
-    page_size = 4
+    def get_page_size(self, request):
+        page_size = request.GET.get('page_size')
+        return page_size
