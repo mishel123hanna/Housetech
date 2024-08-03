@@ -112,7 +112,6 @@ class PropertyImagesCreateAPIView(generics.CreateAPIView):
 
         images = request.FILES.getlist('image')
 
-        # Check if images are provided
         if not images:
             return Response(
                 {"error": "No images provided."},

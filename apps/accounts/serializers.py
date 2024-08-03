@@ -48,7 +48,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
         if password != password2:
             raise serializers.ValidationError("passwords do not match")
         return attrs
-
+    
     def create(self, validated_data):
         user = CustomUser.objects.create_user(
             email=validated_data["email"],

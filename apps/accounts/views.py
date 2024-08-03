@@ -36,7 +36,7 @@ class RegisterUserAPIView(GenericAPIView):
             return Response(
                 {
                     "data": user,
-                    "message": f"hi {user['first_name']} thanks for signing up, a passcode has be sent to your email",
+                    "message": f"hi {user['first_name']} thanks for signing up, a passcode has been sent to your email",
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -113,7 +113,6 @@ class PasswordResetRequestAPIView(GenericAPIView):
                 email = serializer.validated_data["email"]
                 user = CustomUser.objects.get(email=email)
 
-                # Create OneTimePassword object
                 PasswordResetCode.objects.update_or_create(user=user, code=0)
 
                 return Response(
