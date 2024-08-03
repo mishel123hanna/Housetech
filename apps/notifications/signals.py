@@ -119,7 +119,8 @@ def send_notification(sender, instance, created, **kwargs):
         message = f"تم اضافة العقار {property_title} في {property_city} نوعه {property_type} حالته {property_status}"
         topic = f"{property_city}-{property_type}-{property_status}"
         encoded_topic = urllib.parse.quote(topic)
-        # print(encoded_topic)
+        print(topic)
+        print(encoded_topic)
        
        
         send_topic_notification(f"{encoded_topic}", "New Property Alert", message, {"slug":property_slug})
