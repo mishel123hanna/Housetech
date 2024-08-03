@@ -274,8 +274,8 @@ class UserPropertyFavoriteDeleteView(APIView):
 
     def delete(self, request, format=None):
         property_id = self.request.data.get('property_id')
-        print(property_id)
-        print(request.auth)
+        print(f"property_id: {property_id}")
+        print(f"t: {request.auth}")
         property_instance = Property.objects.get(id=property_id)
         favorite = get_object_or_404(UserPropertyFavorite, user=request.user, property=property_instance)
         favorite.delete()
