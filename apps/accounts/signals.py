@@ -32,6 +32,11 @@ def send_code_on_user_creation(sender, instance, created, **kwargs):
             to_email,
           
         )).start()
+
+def generate_otp():
+    return "".join(str(random.randint(1, 9)) for _ in range(6))
+
+
         # send_mail(
         #     subject,
         #     email_body,
@@ -41,8 +46,6 @@ def send_code_on_user_creation(sender, instance, created, **kwargs):
         # )
 
 
-def generate_otp():
-    return "".join(str(random.randint(1, 9)) for _ in range(6))
 
 
 @receiver(post_save, sender=PasswordResetCode)

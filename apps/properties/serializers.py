@@ -29,6 +29,7 @@ class PropertySerializer(serializers.ModelSerializer):
     views = serializers.IntegerField(read_only=True)
     is_favorite = serializers.SerializerMethodField()
     is_owner = serializers.SerializerMethodField()
+    cover_photo = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -77,6 +78,8 @@ class PropertySerializer(serializers.ModelSerializer):
     def get_user(self, obj):
         return obj.user.email
     
+    def get_cover_photo(self,obj):
+        return f"{settings.CLOUDINARY_BASE_URL}/{obj.cover_photo}"
   
     def get_profile_photo(self, obj):
         return obj.user.profile.profile_photo.url
@@ -140,8 +143,8 @@ class PropertySerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         # If property is not for sale, remove the ownership_type field
-        if instance.property_status != "For Sale":
-            data.pop("ownership_type")
+     #   if instance.property_status != "للبيع":
+      #      data.pop("ownership_type")
 
         return data
     # def update(self, instance, validated_data):

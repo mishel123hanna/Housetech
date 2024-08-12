@@ -7,7 +7,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
-
+from django.conf import settings
 
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, style={'input_type': 'password'})
@@ -64,8 +64,6 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=60, write_only=True)
     full_name = serializers.CharField(max_length=255, read_only=True)
     token = serializers.CharField(max_length = 100, read_only=True)
-    # access_token = serializers.CharField(max_length=255, read_only=True)
-    # refresh_token = serializers.CharField(max_length=255, read_only=True)
 
     class Meta:
         model = CustomUser
@@ -87,7 +85,6 @@ class UserLoginSerializer(serializers.Serializer):
             "email": user.email,
             "full_name": user.get_full_name,
             "token": token[0],
-            # "refresh_token": str(user_tokens.get("refresh")),
         }
 
 
@@ -116,7 +113,7 @@ class ProfileSerializer(serializers.Serializer):
     gender = serializers.CharField()
     phone_number = serializers.CharField()
     about_me = serializers.CharField()
-    profile_photo = serializers.ImageField()
+    profile_photo = serializers.SerializerMethodField()
     city = serializers.CharField()
     is_buyer = serializers.BooleanField()
     is_seller = serializers.BooleanField()
@@ -153,7 +150,9 @@ class ProfileSerializer(serializers.Serializer):
         last_name = obj.user.last_name.title()
         return f"{first_name} {last_name}"
     
-
+    def get_profile_photo(self, obj):
+        return f"{settings.CLOUDINARY_BASE_URL}/{obj.profile_photo}"
+    
 class UpdateProfileSerializer(serializers.ModelSerializer):
     # first_name = serializers.CharField(source = "user.first_name")
     # last_name = serializers.CharField(source = "user.last_name")
@@ -161,7 +160,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     preferred_locations = serializers.ListField(
             child=serializers.CharField(), required=False, source='preferred_locations_list'
         )
-
+    profile_photo_url = serializers.SerializerMethodField()
     class Meta:
         model = Profile
         fields = [
@@ -171,7 +170,7 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             "gender",
             "phone_number",
             "about_me",
-            "profile_photo",
+            "profile_photo_url",
             "city",
             "is_buyer",
             "is_seller",
@@ -179,6 +178,10 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
             'preferred_locations',
 
         ]
+    
+    def get_profile_photo_url(self, obj):
+        return f"{settings.CLOUDINARY_BASE_URL}/{obj.profile_photo}"
+
     def update(self, instance, validated_data):
         user_data = validated_data.pop('user', None)
         preferred_locations_data = validated_data.pop('preferred_locations_list', None)
