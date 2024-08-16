@@ -87,7 +87,10 @@ class PropertyCreateAPIView(generics.CreateAPIView):
     queryset = Property.objects.all()
 
     def perform_create(self, serializer):
-        property_instance = serializer.save(user=self.request.user)
+        cover_photo = self.request.FILES.get("cover_photo")
+        print(f'cover_photo: {cover_photo}')
+        property_instance = serializer.save(user=self.request.user, cover_photo=cover_photo)
+
 
         # images_data = self.request.FILES.getlist('images')
         # for image_data in images_data:
