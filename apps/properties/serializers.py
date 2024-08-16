@@ -79,7 +79,7 @@ class PropertySerializer(serializers.ModelSerializer):
         return obj.user.email
     
     def get_cover_photo(self,obj):
-        return f"{settings.CLOUDINARY_BASE_URL}/{obj.cover_photo}"
+        return f"{obj.cover_photo}"
   
     def get_profile_photo(self, obj):
         return obj.user.profile.profile_photo.url
