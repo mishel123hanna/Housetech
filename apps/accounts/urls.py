@@ -1,5 +1,16 @@
 from django.urls import path
-from .views import *
+
+from .views import (
+    AgentListAPIView,
+    GetProfileAPIView,
+    LoginUserAPIView,
+    LogoutAPIView,
+    PasswordResetConfirmAPIView,
+    PasswordResetRequestAPIView,
+    RegisterUserAPIView,
+    UpdateProfileAPIView,
+    VerifyUserEmailAPIView,
+)
 
 urlpatterns = [
     path("register/", RegisterUserAPIView.as_view(), name="register"),
@@ -16,20 +27,7 @@ urlpatterns = [
         PasswordResetConfirmAPIView.as_view(),
         name="password-reset-confirm",
     ),
-    path(
-        "profile/",
-        GetProfileAPIView.as_view(),
-        name = "get_user_profile"
-    ),
-    path(
-        "edit-profile/",
-        UpdateProfileAPIView.as_view(),
-        name = "update_user_profile"
-    ),
-    path(
-        "agents/",
-        AgentListAPIView.as_view(),
-        name = "get_all_agents"
-    ),
-
+    path("profile/", GetProfileAPIView.as_view(), name="get_user_profile"),
+    path("edit-profile/", UpdateProfileAPIView.as_view(), name="update_user_profile"),
+    path("agents/", AgentListAPIView.as_view(), name="get_all_agents"),
 ]

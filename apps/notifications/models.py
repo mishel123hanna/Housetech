@@ -1,8 +1,9 @@
 from django.db import models
-# from django.contrib.auth import get_user_model
+
 from project import settings
-# User = get_user_model()
+
 User = settings.AUTH_USER_MODEL
+
 
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -14,5 +15,6 @@ class Notification(models.Model):
 class FCMToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255)
-    device_type = models.CharField(max_length=10, choices=[('web', 'Web'), ('android', 'Android')])
-    
+    device_type = models.CharField(
+        max_length=10, choices=[("web", "Web"), ("android", "Android")]
+    )

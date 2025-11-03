@@ -1,5 +1,7 @@
 from rest_framework import serializers
+
 from .models import Rating
+
 
 class RatingSerializer(serializers.ModelSerializer):
     rater = serializers.SerializerMethodField(read_only=True)
@@ -11,6 +13,6 @@ class RatingSerializer(serializers.ModelSerializer):
 
     def get_rater(self, obj):
         return obj.rater.email
-    
+
     def get_agent(self, obj):
         return obj.agent.user.email

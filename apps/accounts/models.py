@@ -1,33 +1,19 @@
-from django.db import models
 import uuid
-import io
-from PIL import Image
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils import timezone
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
+
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import (
     AbstractBaseUser,
-    PermissionsMixin,
     BaseUserManager,
+    PermissionsMixin,
 )
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-# from rest_framework_simplejwt.tokens import RefreshToken
-# from phonenumber_field.modelfields import PhoneNumberField
+
 from apps.utils.models import TimeStampedUUIDModel
-from cloudinary.models import CloudinaryField
-# import cloudinary.uploader
-# import os
-# from django.conf import settings
 
-# image_path = os.path.join(settings.BASE_DIR, 'mediafiles', 'user.png')
-
-# # Upload the image to Cloudinary
-# result = cloudinary.uploader.upload(image_path)
-
-# # Get the URL of the uploaded image
-# default_image_url = result['secure_url']
-# print("Default Image URL:", default_image_url)
 
 class CustomUserManager(BaseUserManager):
     def email_validator(self, email):
@@ -84,7 +70,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True, verbose_name=_("Email"))
     first_name = models.CharField(verbose_name=_("First Name"), max_length=50)
     last_name = models.CharField(verbose_name=_("Last Name"), max_length=50)
-    auth_provider = models.CharField(max_length=50, default=AUTH_PROVIDERS.get("email"), verbose_name=_("Auth Provider"))
+    auth_provider = models.CharField(
+        max_length=50,
+        default=AUTH_PROVIDERS.get("email"),
+        verbose_name=_("Auth Provider"),
+    )
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -93,9 +83,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
+
     class Meta:
         verbose_name = _("User")
         verbose_name_plural = _("Users")
+
     @property
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
@@ -127,11 +119,14 @@ class PasswordResetCode(models.Model):
 
 
 class Gender(models.TextChoices):
-    MALE = "Male",_("MALE")
-    FEMALE = "Female",_("Female")
+    MALE = "Male", _("MALE")
+    FEMALE = "Female", _("Female")
+
 
 class Profile(TimeStampedUUIDModel):
-    user = models.OneToOneField(CustomUser, related_name = "profile", on_delete = models.CASCADE)
+    user = models.OneToOneField(
+        CustomUser, related_name="profile", on_delete=models.CASCADE
+    )
     phone_number = models.CharField(
         verbose_name=_("Phone Number"), max_length=30, default="0999999999"
     )
@@ -139,7 +134,8 @@ class Profile(TimeStampedUUIDModel):
         verbose_name=_("About me"), default="say something about yourself"
     )
     profile_photo = CloudinaryField(
-        verbose_name=_("Profile Photo"), default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397486/h6boanvk8x1946dazyll.png"
+        verbose_name=_("Profile Photo"),
+        default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397486/h6boanvk8x1946dazyll.png",
     )
     gender = models.CharField(
         verbose_name=_("Gender"),
@@ -172,35 +168,22 @@ class Profile(TimeStampedUUIDModel):
         verbose_name=_("Number of Reviews"), default=0, null=True, blank=True
     )
 
-    preferred_locations = models.CharField(max_length=255, null=True, blank=True)  # Using comma-separated values
+    preferred_locations = models.CharField(
+        max_length=255, null=True, blank=True
+    )  # Using comma-separated values
 
     @property
     def preferred_locations_list(self):
         if self.preferred_locations:
-            return self.preferred_locations.split(',')
+            return self.preferred_locations.split(",")
         return []
 
     @preferred_locations_list.setter
     def preferred_locations_list(self, value):
         if isinstance(value, list):
-            self.preferred_locations = ','.join(value)
+            self.preferred_locations = ",".join(value)
         else:
             raise ValueError("Preferred locations must be a list")
 
-
     def __str__(self):
         return f"{self.user.get_full_name}'s profile"
-    
-    # def save(self, *args, **kwargs):
-    #     # Open the uploaded image
-    #     image = Image.open(self.profile_photo)
-
-    #     # Convert the image to the desired format (e.g., PNG)
-    #     output = io.BytesIO()
-    #     image.save(output, format='PNG', quality=100)
-    #     output.seek(0)
-
-    #     # Reassign the image field with the converted image
-    #     self.profile_photo = SimpleUploadedFile(self.profile_photo.name, output.getvalue(), content_type='image/png')
-
-    #     super().save(*args, **kwargs)

@@ -1,32 +1,33 @@
 import logging
 
-from django.shortcuts import get_object_or_404
 import django_filters
-from django.db.models import query
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, permissions, status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import ValidationError
-from .models import Property, PropertyViews, PropertyImages, UserPropertyFavorite
+
+from .models import Property, PropertyImages, PropertyViews, UserPropertyFavorite
 from .pagination import PropertyPagination
-from .serializers import (PropertyCreateSerializer, PropertySerializer,
-                          PropertyViewSerializer, PropertyImagesSerializer, UserPropertyFavoriteSerializer)
-from .permissions import IsOwnerOrReadOnly, IsOwnerOfProperty
-import threading
+from .permissions import IsOwnerOfProperty, IsOwnerOrReadOnly
+from .serializers import (
+    PropertyCreateSerializer,
+    PropertyImagesSerializer,
+    PropertySerializer,
+    UserPropertyFavoriteSerializer,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class PropertyFilter(django_filters.FilterSet):
-
     property_status = django_filters.CharFilter(
         field_name="property_status", lookup_expr="iexact"
     )
-    rent_type = django_filters.CharFilter(
-        field_name="rent_type", lookup_expr="iexact"
-    )
+    rent_type = django_filters.CharFilter(field_name="rent_type", lookup_expr="iexact")
 
     property_type = django_filters.CharFilter(
         field_name="property_type", lookup_expr="iexact"
@@ -41,8 +42,10 @@ class PropertyFilter(django_filters.FilterSet):
     price = django_filters.NumberFilter()
     price_gt = django_filters.NumberFilter(field_name="price", lookup_expr="gt")
     price_lt = django_filters.NumberFilter(field_name="price", lookup_expr="lt")
-    city = django_filters.CharFilter(field_name="location__city", lookup_expr='iexact')
-    region = django_filters.CharFilter(field_name="location__region", lookup_expr="iexact")
+    city = django_filters.CharFilter(field_name="location__city", lookup_expr="iexact")
+    region = django_filters.CharFilter(
+        field_name="location__region", lookup_expr="iexact"
+    )
 
     class Meta:
         model = Property
@@ -50,7 +53,7 @@ class PropertyFilter(django_filters.FilterSet):
 
 
 class ListAllPropertiesAPIView(generics.ListAPIView):
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
     serializer_class = PropertySerializer
     queryset = Property.objects.all().order_by("-created_at")
     pagination_class = PropertyPagination
@@ -63,6 +66,7 @@ class ListAllPropertiesAPIView(generics.ListAPIView):
     filterset_class = PropertyFilter
     ordering_fields = ["-created_at"]
 
+
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])
 def add_property(request):
@@ -73,9 +77,7 @@ def add_property(request):
 
     if serializer.is_valid():
         serializer.save()
-        logger.info(
-            f"property {serializer.data.get('title')} created by {user.email}"
-        )
+        logger.info(f"property {serializer.data.get('title')} created by {user.email}")
         return Response(serializer.data)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -88,220 +90,52 @@ class PropertyCreateAPIView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         cover_photo = self.request.FILES.get("cover_photo")
-        print(f'cover_photo: {cover_photo}')
-        property_instance = serializer.save(user=self.request.user, cover_photo=cover_photo)
+        print(f"cover_photo: {cover_photo}")
+        property_instance = serializer.save(
+            user=self.request.user, cover_photo=cover_photo
+        )
 
 
-        # images_data = self.request.FILES.getlist('images')
-        # for image_data in images_data:
-        #     PropertyImages.objects.create(property=property_instance, image=image_data)
-
-
-# import cv2
-# import numpy as np
-# import tensorflow as tf
-# from rest_framework import generics, status
-# from rest_framework.response import Response
-# from rest_framework.permissions import IsAuthenticated
-# from .models import Property, PropertyImages
-# from .serializers import PropertyImagesSerializer
-# from .permissions import IsOwnerOfProperty
-# from django.core.files.base import ContentFile
-# from io import BytesIO
-# from PIL import Image
-# from cloudinary.uploader import upload as cloudinary_upload
-# import os
-# from django.conf import settings
-
-# def pixel_mse_loss(x, y):
-#     return tf.reduce_mean((x - y) ** 2)
-
-# # Load the SRCNN model
-# SRCNN = tf.keras.models.load_model(os.path.join(settings.BASE_DIR, "srcnn_model.h5"),custom_objects = {"pixel_mse_loss":pixel_mse_loss})
-
-# class PropertyImagesCreateAPIView(generics.CreateAPIView):
-#     permission_classes = (IsAuthenticated, IsOwnerOfProperty)
-#     serializer_class = PropertyImagesSerializer
-#     queryset = PropertyImages.objects.all()
-
-#     def preprocess_image(self, image):
-#         # Read image
-#         image = cv2.imdecode(np.frombuffer(image.read(), np.uint8), cv2.IMREAD_COLOR)
-#         # Resize image to 256x256
-#         image = cv2.resize(image, (256, 256))
-#         # Convert to YCrCb color space
-#         image_ycrcb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-#         # Extract Y channel
-#         y_channel = image_ycrcb[:, :, 0].astype(np.float32) / 255.0
-#         y_channel = np.expand_dims(y_channel, axis=0)
-#         y_channel = np.expand_dims(y_channel, axis=-1)
-#         # Expand Y channel to 3 channels (replicating for compatibility)
-#         y_channel_rgb = np.repeat(y_channel, 3, axis=-1)
-#         return y_channel_rgb, image_ycrcb
-
-#     def optimize_image(self, y_channel_rgb):
-#         # Predict high-resolution Y channel
-#         optimized_y = SRCNN.predict(y_channel_rgb)
-#         # Convert optimized output to a single channel
-#         return optimized_y[0, :, :, 0] * 255.0
-
-
-#     def postprocess_image(self, optimized_y, image_ycrcb):
-#         # Replace Y channel with optimized Y
-#         image_ycrcb[:, :, 0] = optimized_y.astype(np.uint8)
-#         # Convert back to BGR color space
-#         optimized_image = cv2.cvtColor(image_ycrcb, cv2.COLOR_YCrCb2BGR)
-#         return optimized_image
-
-#     def create(self, request, *args, **kwargs):
-#         property_id = request.data.get('property_id')
-#         try:
-#             property_instance = Property.objects.get(id=property_id)
-#         except Property.DoesNotExist:
-#             return Response(
-#                 {"error": "Property not found."},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-
-#         images = request.FILES.getlist('image')
-
-#         if not images:
-#             return Response(
-#                 {"error": "No images provided."},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-        
-#         image_instances = []
-#         for image in images:
-#             # Preprocess image
-#             y_channel, image_ycrcb = self.preprocess_image(image)
-#             # Optimize image
-#             optimized_y = self.optimize_image(y_channel)
-#             # Postprocess image
-#             optimized_image = self.postprocess_image(optimized_y, image_ycrcb)
-#             # Save optimized image to Cloudinary
-#             optimized_image_pil = Image.fromarray(optimized_image)
-#             buffer = BytesIO()
-#             optimized_image_pil.save(buffer, format='JPEG')
-#             optimized_image_file = ContentFile(buffer.getvalue())
-#             cloudinary_response = cloudinary_upload(optimized_image_file)
-#             # Create PropertyImages instance
-#             image_instance = PropertyImages(property=property_instance, image=cloudinary_response['url'])
-#             image_instances.append(image_instance)
-
-#         PropertyImages.objects.bulk_create(image_instances)
-
-#         serializer = self.get_serializer(image_instances, many=True)
-#         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-# without ai
- 
 class PropertyImagesCreateAPIView(generics.CreateAPIView):
     permission_classes = (IsAuthenticated, IsOwnerOfProperty)
     serializer_class = PropertyImagesSerializer
     queryset = PropertyImages.objects.all()
 
     def create(self, request, *args, **kwargs):
-        property_id = request.data.get('property_id')
+        property_id = request.data.get("property_id")
         try:
             property_instance = Property.objects.get(id=property_id)
         except Property.DoesNotExist:
             return Response(
-                {"error": "Property not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"error": "Property not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-
-        images = request.FILES.getlist('image')
+        images = request.FILES.getlist("image")
 
         if not images:
             return Response(
-                {"error": "No images provided."},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "No images provided."}, status=status.HTTP_400_BAD_REQUEST
             )
-     
+
         image_instances = []
-        for image in images:          
+        for image in images:
             image_instance = PropertyImages(property=property_instance, image=image)
             image_instances.append(image_instance)
 
-        
         PropertyImages.objects.bulk_create(image_instances)
-
 
         serializer = self.get_serializer(image_instances, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
-# upload images using threading
 
-# class PropertyImagesCreateAPIView(generics.CreateAPIView):
-#     permission_classes = (IsAuthenticated, IsOwnerOfProperty)
-#     serializer_class = PropertyImagesSerializer
-#     queryset = PropertyImages.objects.all()
-
-#     def create(self, request, *args, **kwargs):
-#         property_id = request.data.get('property_id')
-#         try:
-#             property_instance = Property.objects.get(id=property_id)
-#         except Property.DoesNotExist:
-#             return Response(
-#                 {"error": "Property not found."},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-
-#         images = request.FILES.getlist('image')
-#         if not images:
-#             return Response(
-#                 {"error": "No images provided."},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         # Read files into memory
-#         image_files = []
-#         for image in images:
-#             image_files.append((image.name, image.read()))
-
-#         # Start a thread to save image instances
-#         threading.Thread(target=self.save_images, args=(property_instance, image_files)).start()
-
-#         return Response({"message": "Images are being uploaded."}, status=status.HTTP_201_CREATED)
-
-#     def save_images(self, property_instance, image_files):
-#         image_instances = []
-#         for name, content in image_files:
-#             # Create an in-memory file object
-#             from django.core.files.base import ContentFile
-#             in_memory_file = ContentFile(content, name=name)
-
-#             # Create an image instance with the provided property and in-memory file
-#             image_instance = PropertyImages(property=property_instance, image=in_memory_file)
-#             image_instance.save()
-#             image_instances.append(image_instance)
 
 class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     queryset = Property.objects.all()
     permission_classes = (IsOwnerOrReadOnly,)
-    lookup_field = 'slug'
+    lookup_field = "slug"
 
     def perform_update(self, serializer):
         property_instance = serializer.save(user=self.request.user)
-        # images_data = self.request.data.get('images', [])
-        # pkid = self.request.data.get('pkid')
-        
-        # if pkid is not None:
-        #     PropertyImages.objects.filter(property = property_instance, pkid=pkid).update(image=images_data)
-        # else:
-        #     images_data = self.request.FILES.getlist('images')
-        #     for image_data in images_data:
-        #         PropertyImages.objects.create(property=property_instance, image=image_data)
-        #     # PropertyImages.objects.filter(property = property_instance).create(image = images_data)
-        #     # Handle the case if pkid is not provided
-        #     # You may want to raise an error or handle this case differently based on your requirements
-        #     pass
-        # images_data = self.request.FILES.getlist('images')
-        # for image_data in images_data:
-        #     PropertyImages.objects.update(property=property_instance, image=image_data)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -316,44 +150,40 @@ class PropertyRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView
             instance.save()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
-    
+
+
 class PropertyImageDelete(generics.DestroyAPIView):
     permission_classes = (IsAuthenticated, IsOwnerOrReadOnly)
     serializer_class = PropertyImagesSerializer
     queryset = PropertyImages.objects.all()
-    lookup_field = 'pkid'
-    
+    lookup_field = "pkid"
+
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({"message":"Image deleted successfully"}, status=status.HTTP_200_OK)
-    
+        return Response(
+            {"message": "Image deleted successfully"}, status=status.HTTP_200_OK
+        )
+
+
 class UserProperties(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = PropertySerializer
 
     def get_queryset(self):
-            user = self.request.user
-            return user.owner.all()  
+        user = self.request.user
+        return user.owner.all()
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        
+
         if queryset.exists():
             return super().list(request, *args, **kwargs)
         else:
-            return Response({"success":False,"message": "No properties for user"}, status=status.HTTP_200_OK)
-
-# from rest_framework.decorators import api_view, permission_classes
-
-# @api_view(['GET'])
-# def get_user_properties(request):
-#     user = request.user
-#     print(user)
-#     properties = user.owner.all()
-#     serializer = PropertySerializer(properties, many=True) 
-
-#     return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {"success": False, "message": "No properties for user"},
+                status=status.HTTP_200_OK,
+            )
 
 
 class UserPropertyFavoriteListCreateView(generics.ListCreateAPIView):
@@ -364,28 +194,28 @@ class UserPropertyFavoriteListCreateView(generics.ListCreateAPIView):
         return UserPropertyFavorite.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        property_id = self.request.data.get('property_id')
+        property_id = self.request.data.get("property_id")
         property_instance = get_object_or_404(Property, id=property_id)
         user = self.request.user
-        if UserPropertyFavorite.objects.filter(user=user, property=property_instance).exists():
-            raise ValidationError("You have already added this property to your favorites.")
+        if UserPropertyFavorite.objects.filter(
+            user=user, property=property_instance
+        ).exists():
+            raise ValidationError(
+                "You have already added this property to your favorites."
+            )
         serializer.save(user=user, property=property_instance)
+
 
 class UserPropertyFavoriteDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request, format=None):
-        property_id = self.request.data.get('property_id')
+        property_id = self.request.data.get("property_id")
         print(f"property_id: {property_id}")
         print(f"t: {request.auth}")
         property_instance = Property.objects.get(id=property_id)
-        favorite = get_object_or_404(UserPropertyFavorite, user=request.user, property=property_instance)
+        favorite = get_object_or_404(
+            UserPropertyFavorite, user=request.user, property=property_instance
+        )
         favorite.delete()
         return Response(status=204)
-    
-
-# from django.urls import resolve
-# from django.http import HttpResponse
-# def debug_url_patterns(request):
-#     match = resolve(request.path_info)
-#     return HttpResponse(f"URL Name: {match.url_name}, View: {match.func.__name__}")

@@ -1,8 +1,8 @@
-from django.shortcuts import render
-from rest_framework.generics import GenericAPIView
-from .serializers import GoogleSignInSerializer
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
+from rest_framework.response import Response
+
+from .serializers import GoogleSignInSerializer
 
 # Create your views here.
 

@@ -1,12 +1,12 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from apps.utils.models import TimeStampedUUIDModel
 from apps.accounts.models import Profile
-from django.contrib.auth import get_user_model
-
+from apps.utils.models import TimeStampedUUIDModel
 
 User = get_user_model()
+
 
 class Rating(TimeStampedUUIDModel):
     class Range(models.IntegerChoices):

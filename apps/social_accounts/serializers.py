@@ -1,7 +1,8 @@
-from rest_framework import serializers
-from .utils import Google, register_social_user
 from django.conf import settings
+from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
+
+from .utils import Google, register_social_user
 
 
 class GoogleSignInSerializer(serializers.Serializer):
@@ -12,7 +13,7 @@ class GoogleSignInSerializer(serializers.Serializer):
         try:
             user_id = google_user_data["sub"]
 
-        except:
+        except Exception:
             raise serializers.ValidationError("this Token is Invalid or has Expired")
 
         if google_user_data["aud"] != settings.GOOGLE_CLIENT_ID:

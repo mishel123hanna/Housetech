@@ -1,24 +1,40 @@
 from django.contrib import admin
-from .models import *
+
+from .models import (
+    Location,
+    Property,
+    PropertyImages,
+    PropertyViews,
+    UserPropertyFavorite,
+)
+
 # Register your models here.
 
 
 class LocationAdmin(admin.ModelAdmin):
-    list_display = ['city', 'region']
-    list_filter = ['city', 'region']
+    list_display = ["city", "region"]
+    list_filter = ["city", "region"]
+
 
 class PropertyAdmin(admin.ModelAdmin):
     ordering = ["-created_at"]
-    list_display = ["user","title", "property_status", "property_type", "location"]
-    list_filter = ["property_status", "property_type", "location__city", "location__region"]
+    list_display = ["user", "title", "property_status", "property_type", "location"]
+    list_filter = [
+        "property_status",
+        "property_type",
+        "location__city",
+        "location__region",
+    ]
 
     def location(self, obj):
         return obj.location
 
     location.short_description = "Location"
 
+
 class PropertyImagesAdmin(admin.ModelAdmin):
-    list_display = ['pkid','property', 'image']
+    list_display = ["pkid", "property", "image"]
+
 
 admin.site.register(Location, LocationAdmin)
 admin.site.register(Property, PropertyAdmin)

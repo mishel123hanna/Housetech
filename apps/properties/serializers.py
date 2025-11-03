@@ -1,23 +1,33 @@
-from rest_framework import serializers 
-from .models import Property, PropertyViews, PropertyImages, Location, UserPropertyFavorite
 from django.conf import settings
+from rest_framework import serializers
+
+from .models import (
+    Location,
+    Property,
+    PropertyImages,
+    PropertyViews,
+    UserPropertyFavorite,
+)
 
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ['city', 'region', 'street']
+        fields = ["city", "region", "street"]
+
 
 class PropertyImagesSerializer(serializers.ModelSerializer):
     property = serializers.PrimaryKeyRelatedField(queryset=Property.objects.all())
     image = serializers.SerializerMethodField()
+
     class Meta:
         model = PropertyImages
-        fields = ['pkid','image', 'property']
+        fields = ["pkid", "image", "property"]
 
-    def get_image(self,obj):
+    def get_image(self, obj):
         return f"{settings.CLOUDINARY_BASE_URL}/{obj.image}"
- 
+
+
 class PropertySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     profile_photo = serializers.SerializerMethodField()
@@ -30,7 +40,6 @@ class PropertySerializer(serializers.ModelSerializer):
     is_favorite = serializers.SerializerMethodField()
     is_owner = serializers.SerializerMethodField()
     cover_photo = serializers.SerializerMethodField()
-
 
     class Meta:
         model = Property
@@ -46,7 +55,7 @@ class PropertySerializer(serializers.ModelSerializer):
             "slug",
             "ref_code",
             "description",
-            'location',
+            "location",
             "property_number",
             "price",
             "plot_area",
@@ -75,26 +84,27 @@ class PropertySerializer(serializers.ModelSerializer):
             "is_owner",
             "images",
         ]
+
     def get_user(self, obj):
         return obj.user.email
-    
-    def get_cover_photo(self,obj):
+
+    def get_cover_photo(self, obj):
         return f"{settings.CLOUDINARY_BASE_URL}/{obj.cover_photo}"
-  
+
     def get_profile_photo(self, obj):
         return obj.user.profile.profile_photo.url
-    
+
     def get_phone_number(self, obj):
         return obj.user.profile.phone_number
-    
+
     def get_is_favorite(self, obj):
-        user = self.context['request'].user
+        user = self.context["request"].user
         if user.is_authenticated:
             return UserPropertyFavorite.objects.filter(user=user, property=obj).exists()
         return False
-    
-    def get_is_owner(self,obj):
-        user = self.context['request'].user
+
+    def get_is_owner(self, obj):
+        user = self.context["request"].user
         if user.is_authenticated:
             return obj.user == user
         return False
@@ -106,20 +116,22 @@ class PropertySerializer(serializers.ModelSerializer):
     #     return PropertyImagesSerializer(property_photos, many=True).data
 
     def create(self, validated_data):
-        location_data = validated_data.pop('location')
+        location_data = validated_data.pop("location")
         location = Location.objects.create(**location_data)
         property_instance = Property.objects.create(location=location, **validated_data)
         return property_instance
-    
+
     def update(self, instance, validated_data):
         try:
-            location_data = validated_data.pop('location')
-            location_serializer = LocationSerializer(instance.location, data=location_data)
+            location_data = validated_data.pop("location")
+            location_serializer = LocationSerializer(
+                instance.location, data=location_data
+            )
             if location_serializer.is_valid():
                 location_serializer.save()
             else:
                 raise serializers.ValidationError(location_serializer.errors)
-        except:
+        except Exception:
             pass
         # try:
         #     images_data = validated_data.pop('images')
@@ -143,10 +155,11 @@ class PropertySerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
 
         # If property is not for sale, remove the ownership_type field
-     #   if instance.property_status != "للبيع":
-      #      data.pop("ownership_type")
+        #   if instance.property_status != "للبيع":
+        #      data.pop("ownership_type")
 
         return data
+
     # def update(self, instance, validated_data):
     #     images_data = validated_data.pop('images', [])
 
@@ -173,8 +186,9 @@ class PropertySerializer(serializers.ModelSerializer):
     #             image.delete()
 
     #     return instance
-class PropertyCreateSerializer(serializers.ModelSerializer):
 
+
+class PropertyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         exclude = ["updated_at", "pkid"]
@@ -184,7 +198,6 @@ class PropertyViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyViews
         exclude = ["updated_at", "pkid"]
-
 
 
 # class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
@@ -201,11 +214,13 @@ class PropertyViewSerializer(serializers.ModelSerializer):
 #         model = UserPropertyFavorite
 #         fields = ['property']
 
+
 class UserPropertyFavoriteSerializer(serializers.ModelSerializer):
     property = PropertySerializer(read_only=True)
+
     class Meta:
         model = UserPropertyFavorite
-        fields = ['property']
+        fields = ["property"]
 
     # def validate(self, data):
     #     user = self.context['request'].user

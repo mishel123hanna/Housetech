@@ -1,21 +1,20 @@
 import random
 import string
-from django.db import models
+
+from autoslug import AutoSlugField
+from cloudinary.models import CloudinaryField
+
 # from django.contrib.gis.db import models as gis_models
 # from django.contrib.gis.geos import Point
 from django.core.validators import MinValueValidator
-# from django.contrib.auth import get_user_model
+from django.db import models
 from django.utils.translation import gettext_lazy as _
-from autoslug import AutoSlugField
+
 from apps.utils.models import TimeStampedUUIDModel
 from project import settings
-from cloudinary.models import CloudinaryField
-
-
-# User = get_user_model()
-
 
 User = settings.AUTH_USER_MODEL
+
 
 class PropertyPublishedManager(models.Manager):
     def get_queryset(self):
@@ -24,17 +23,22 @@ class PropertyPublishedManager(models.Manager):
             .get_queryset()
             .filter(published_status=True)
         )
-    
+
+
 class Location(TimeStampedUUIDModel):
     # latitude = gis_models.FloatField(verbose_name=_("Latitude"))
     # longitude = gis_models.FloatField(verbose_name=_("Longitude"))
     city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
-    region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
-    street = models.CharField(verbose_name=_("Street Address"), max_length=150, null=True, blank=True)
-
+    region = models.CharField(
+        verbose_name=_("Region"), max_length=50, null=True, blank=True
+    )
+    street = models.CharField(
+        verbose_name=_("Street Address"), max_length=150, null=True, blank=True
+    )
 
     def __str__(self):
         return f"{self.city}-{self.region}"
+
 
 class Property(TimeStampedUUIDModel):
     class PropertyStatus(models.TextChoices):
@@ -52,7 +56,7 @@ class Property(TimeStampedUUIDModel):
         BUILDING = "بناء", _("بناء")
         LAND = "أرض", _("أرض")
         OTHER = "اخر", _("اخر")
-        
+
     class OwnershipType(models.TextChoices):
         A = "طابو أخضر", _("طابو أخضر")
         B = "عقد بيع قطعي", _("عقد بيع قطعي")
@@ -65,7 +69,7 @@ class Property(TimeStampedUUIDModel):
 
     class Covering(models.TextChoices):
         NORMAL = "عادي", _("عادي")
-        SUPER = "سوبر",_("سوبر")
+        SUPER = "سوبر", _("سوبر")
         GOOD = "جيد", _("جيد")
         VERYGOOD = "جيد جدا", _("جيد جدا")
         EXCELLENT = "ممتاز", _("ممتاز")
@@ -80,12 +84,11 @@ class Property(TimeStampedUUIDModel):
         SOUTHEAST = "الجنوب الشرقي", _("الجنوب الشرقي")
         SOUTHWEST = "الجنوب الغربي", _("الجنوب الغربي")
 
-
     class Furnishing(models.TextChoices):
         FURNISHED = "مفروش", _("مفروش")
         HALF_FURNISHED = "نص مفروش", _("نص مفروش")
         NOT_FURNISHED = "غير مفروش", _("غير مفروش")
-    
+
     class RentType(models.TextChoices):
         MONTHLY = "شهري", _("شهري")
         DAILY = "يومي", _("يومي")
@@ -95,11 +98,11 @@ class Property(TimeStampedUUIDModel):
         MERCHANT = "تاجر", _("تاجر")
 
     user = models.ForeignKey(
-            User,
-            verbose_name=_("Agent,Seller or Buyer"),
-            related_name="owner",
-            on_delete=models.DO_NOTHING,
-        )   
+        User,
+        verbose_name=_("Agent,Seller or Buyer"),
+        related_name="owner",
+        on_delete=models.DO_NOTHING,
+    )
     title = models.CharField(verbose_name=_("Property Title"), max_length=250)
     slug = AutoSlugField(populate_from="title", unique=True, always_update=True)
     ref_code = models.CharField(
@@ -112,9 +115,8 @@ class Property(TimeStampedUUIDModel):
         verbose_name=_("Description"),
         default="Default description...update me please....",
     )
-    
-    price = models.IntegerField(
-            verbose_name=_("Price"),default=0)
+
+    price = models.IntegerField(verbose_name=_("Price"), default=0)
     plot_area = models.DecimalField(
         verbose_name=_("Plot Area(m^2)"), max_digits=8, decimal_places=2, default=0.0
     )
@@ -132,11 +134,29 @@ class Property(TimeStampedUUIDModel):
         choices=PropertyType.choices,
         default=PropertyType.OTHER,
     )
-    ownership_type = models.CharField(verbose_name=_("نوع الملكية"), max_length=50, choices=OwnershipType.choices, default=OwnershipType.A)
-    user_type = models.CharField(verbose_name=_("نوع البائع"), max_length=50, choices=UserType.choices, default=UserType.OWNER)
-    covering = models.CharField(verbose_name=_("الاكساء"), max_length=20, choices=Covering.choices, default=Covering.GOOD)
+    ownership_type = models.CharField(
+        verbose_name=_("نوع الملكية"),
+        max_length=50,
+        choices=OwnershipType.choices,
+        default=OwnershipType.A,
+    )
+    user_type = models.CharField(
+        verbose_name=_("نوع البائع"),
+        max_length=50,
+        choices=UserType.choices,
+        default=UserType.OWNER,
+    )
+    covering = models.CharField(
+        verbose_name=_("الاكساء"),
+        max_length=20,
+        choices=Covering.choices,
+        default=Covering.GOOD,
+    )
     cover_photo = CloudinaryField(
-        verbose_name=_("Main Photo"), default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397484/dgdtgymdj0nuqcooi4ko.jpg", null=True, blank=True
+        verbose_name=_("Main Photo"),
+        default="https://res.cloudinary.com/dl9tgk3vr/image/upload/v1720397484/dgdtgymdj0nuqcooi4ko.jpg",
+        null=True,
+        blank=True,
     )
     # city = models.CharField(verbose_name=_("City"), max_length=180, default="Homs")
     # region = models.CharField(verbose_name=_("Region"), max_length=50, null=True, blank=True)
@@ -156,10 +176,22 @@ class Property(TimeStampedUUIDModel):
     elevator = models.BooleanField(verbose_name=_("مصعد"), default=False)
     pool = models.BooleanField(verbose_name=_("مسبح"), default=False)
     solar_panels = models.BooleanField(verbose_name=_("طاقة شمسية"), default=False)
-    furnishing = models.CharField(verbose_name=_("الفرش"), choices=Furnishing.choices, default=Furnishing.NOT_FURNISHED)
-    direction = models.CharField(verbose_name=_("الاتجاه"), choices=Direction.choices, null=True, blank=True)
+    furnishing = models.CharField(
+        verbose_name=_("الفرش"),
+        choices=Furnishing.choices,
+        default=Furnishing.NOT_FURNISHED,
+    )
+    direction = models.CharField(
+        verbose_name=_("الاتجاه"), choices=Direction.choices, null=True, blank=True
+    )
     total_rooms = models.IntegerField(verbose_name=_("عدد الغرف"), default=1)
-    rent_type = models.CharField(verbose_name=_("نوع الأجار"), choices=RentType.choices, default=RentType.MONTHLY, null=True,blank=True)
+    rent_type = models.CharField(
+        verbose_name=_("نوع الأجار"),
+        choices=RentType.choices,
+        default=RentType.MONTHLY,
+        null=True,
+        blank=True,
+    )
     location = models.ForeignKey(
         Location,
         on_delete=models.DO_NOTHING,
@@ -172,14 +204,15 @@ class Property(TimeStampedUUIDModel):
     objects = models.Manager()
     published = PropertyPublishedManager()
 
-
     def __str__(self):
         return self.title
-    
+
     def save(self, *args, **kwargs):
         self.title = str.title(self.title)
         self.description = str.capitalize(self.description)
-        self.total_rooms = self.bedrooms+self.bathrooms+self.living_rooms+self.kitchens
+        self.total_rooms = (
+            self.bedrooms + self.bathrooms + self.living_rooms + self.kitchens
+        )
         if self.property_status == Property.PropertyStatus.FOR_SALE:
             self.rent_type = None
         self.ref_code = "".join(
@@ -189,16 +222,19 @@ class Property(TimeStampedUUIDModel):
 
 
 class PropertyImages(TimeStampedUUIDModel):
-    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
+    property = models.ForeignKey(
+        Property, on_delete=models.CASCADE, related_name="images"
+    )
     image = CloudinaryField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Images For Property"
         verbose_name_plural = "Property Images"
-    
+
     def __str__(self):
         return f"{self.property.title}-{self.property.property_type}"
-    
+
+
 class PropertyViews(TimeStampedUUIDModel):
     ip = models.CharField(verbose_name=_("IP Address"), max_length=250)
     property = models.ForeignKey(
@@ -220,4 +256,4 @@ class UserPropertyFavorite(TimeStampedUUIDModel):
     property = models.ForeignKey(Property, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('user', 'property')
+        unique_together = ("user", "property")

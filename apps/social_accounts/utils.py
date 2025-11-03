@@ -1,12 +1,12 @@
 # pip install google-api-python-client
 
-from google.auth.transport import requests
-
-from google.oauth2 import id_token
-from apps.accounts.models import CustomUser
-from django.contrib.auth import authenticate
 from django.conf import settings
+from django.contrib.auth import authenticate
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from rest_framework.exceptions import AuthenticationFailed
+
+from apps.accounts.models import CustomUser
 
 
 class Google:
@@ -16,7 +16,7 @@ class Google:
             id_info = id_token.verify_oauth2_token(access_token, requests.Request())
             if "accounts.google.com" in id_info("lss"):
                 return id_info
-        except Exception as e:
+        except Exception:
             return "Token is Invalid or has Expired"
 
 

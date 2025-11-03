@@ -1,25 +1,22 @@
+from django.conf import settings
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
-from .models import *
-from rest_framework import generics
-from rest_framework.generics import GenericAPIView
+from rest_framework import generics, status
 from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
+from .models import CustomUser, OneTimePassword, PasswordResetCode, Profile
 from .serializers import (
-    UserRegisterationSerializer,
-    UserLoginSerializer,
+    LogoutSerializer,
+    PasswordResetConfirmSerializer,
     PasswordResetSerializer,
     ProfileSerializer,
     UpdateProfileSerializer,
+    UserLoginSerializer,
+    UserRegisterationSerializer,
     VerifyOTPSerializer,
-    LogoutSerializer,
-    PasswordResetConfirmSerializer,
 )
-from rest_framework.response import Response
-from rest_framework import status
-from django.conf import settings
-
-
 
 
 class RegisterUserAPIView(GenericAPIView):
@@ -50,8 +47,7 @@ class VerifyUserEmailAPIView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"message": "Invalid data provided"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"message": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         otp_code = serializer.validated_data.get("otp")
@@ -65,19 +61,17 @@ class VerifyUserEmailAPIView(GenericAPIView):
                 user.save()
             otp_obj.delete()
             return Response(
-                {"message": "Account verified successfully"},
-                status=status.HTTP_200_OK
+                {"message": "Account verified successfully"}, status=status.HTTP_200_OK
             )
         except OneTimePassword.DoesNotExist:
             return Response(
                 {"message": "Passcode is invalid or not associated with the user"},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_403_FORBIDDEN,
             )
         except Exception as e:
-            return Response(
-                {"message": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class LoginUserAPIView(GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = (AllowAny,)
@@ -90,16 +84,21 @@ class LoginUserAPIView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class LogoutAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = LogoutSerializer
+
     def post(self, request):
         try:
             token = request.auth
             token.delete()
-            return Response({'success': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+            return Response(
+                {"success": "Successfully logged out."}, status=status.HTTP_200_OK
+            )
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class PasswordResetRequestAPIView(GenericAPIView):
     serializer_class = PasswordResetSerializer
@@ -118,7 +117,7 @@ class PasswordResetRequestAPIView(GenericAPIView):
                     {"message": "Password reset email sent successfully."},
                     status=status.HTTP_200_OK,
                 )
-            except:
+            except Exception:
                 return Response(
                     {"message": "Email Does not Exist"},
                     status=status.HTTP_404_NOT_FOUND,
@@ -129,6 +128,7 @@ class PasswordResetRequestAPIView(GenericAPIView):
 class PasswordResetConfirmAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
     serializer_class = PasswordResetConfirmSerializer
+
     def post(self, request):
         email = request.data.get("email", "")
         code = request.data.get("code", "")
@@ -167,7 +167,11 @@ class PasswordResetConfirmAPIView(GenericAPIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             else:
-                return Response({"message":"email , code, new_password, confirm_password are required"})
+                return Response(
+                    {
+                        "message": "email , code, new_password, confirm_password are required"
+                    }
+                )
         except CustomUser.DoesNotExist:
             return Response(
                 {"message": "User with this email does not exist."},
@@ -177,20 +181,19 @@ class PasswordResetConfirmAPIView(GenericAPIView):
             raise AuthenticationFailed(
                 {"message": "Invalid or expired password reset code."},
             )
-    
-
-
 
 
 class GetProfileAPIView(GenericAPIView):
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
+
     def get(self, request):
         user = self.request.user
         user_profile = Profile.objects.get(user=user)
-        serializer = ProfileSerializer(user_profile, context = {"request":request})
-        return Response({"profile":serializer.data}, status=status.HTTP_200_OK)
-    
+        serializer = ProfileSerializer(user_profile, context={"request": request})
+        return Response({"profile": serializer.data}, status=status.HTTP_200_OK)
+
+
 class UpdateProfileAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
@@ -201,24 +204,29 @@ class UpdateProfileAPIView(GenericAPIView):
         try:
             Profile.objects.get(user__email=email)
         except Profile.DoesNotExist:
-            return Response({"message":"user does not exist"}, status = status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"message": "user does not exist"}, status=status.HTTP_404_NOT_FOUND
+            )
         if email != email:
-            return Response({"message":"Not your Profile"}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"message": "Not your Profile"}, status=status.HTTP_403_FORBIDDEN
+            )
         data = request.data
         serializer = UpdateProfileSerializer(
             instance=request.user.profile, data=data, partial=True
         )
         if serializer.is_valid():
-            serializer.save()  
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+
 
 # class TopAgentsListAPIView(generics.ListAPIView):
 #     permission_classes = (IsAuthenticated,)
 #     queryset = Profile.objects.filter(top_agent=True)
 #     serializer_class = ProfileSerializer
+
 
 class AgentListAPIView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)

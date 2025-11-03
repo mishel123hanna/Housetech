@@ -1,8 +1,10 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+from rest_framework import status, viewsets
 from rest_framework.permissions import IsAuthenticated
-from .models import Notification, FCMToken
-from .serializers import *
+from rest_framework.response import Response
+
+from .models import Notification
+from .serializers import NotificationSerializer
+
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
@@ -17,7 +19,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
         notification.is_read = True
         notification.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+
+
 # class FCMTokenViewSet(viewsets.ModelViewSet):
 #     queryset = FCMToken.objects.all()
 #     serializer_class = FCMTokenSerializer
