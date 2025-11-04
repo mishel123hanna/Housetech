@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .forms import CustomUser, CustomUserChangeForm, CustomUserCreationForm
-from .models import OneTimePassword, PasswordResetCode, Profile
+from .forms import CustomUserChangeForm, CustomUserCreationForm
+from .models import CustomUser, OneTimePassword, PasswordResetCode, Profile
 
 
 class UserAdmin(BaseUserAdmin):
@@ -31,6 +31,7 @@ class UserAdmin(BaseUserAdmin):
         "is_staff",
         "is_active",
     ]
+    readonly_fields = ("last_login", "date_joined")
     fieldsets = (
         (
             _("Login Credentials"),

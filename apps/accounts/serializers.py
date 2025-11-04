@@ -1,11 +1,12 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.backends import ModelBackend
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import CustomUser, Profile
+from .models import CustomUser, PasswordResetCode, Profile
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -72,12 +73,11 @@ class UserLoginSerializer(serializers.Serializer):
             raise AuthenticationFailed("invalid credentials try again")
         if not user.is_active:
             raise AuthenticationFailed("Email is not Verified")
-        token = Token.objects.get_or_create(user=user)
-        print(token)
+        token, _ = Token.objects.get_or_create(user=user)
         return {
             "email": user.email,
             "full_name": user.get_full_name,
-            "token": token[0],
+            "token": token.key,
         }
 
 
@@ -85,21 +85,12 @@ class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
-class ProfileSerializer(serializers.Serializer):
+class ProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source="user.first_name")
     last_name = serializers.CharField(source="user.last_name")
     email = serializers.CharField(source="user.email")
-    gender = serializers.CharField()
-    phone_number = serializers.CharField()
-    about_me = serializers.CharField()
-    profile_photo = serializers.SerializerMethodField()
-    city = serializers.CharField()
-    is_buyer = serializers.BooleanField()
-    is_seller = serializers.BooleanField()
-    is_agent = serializers.BooleanField()
-    rating = serializers.DecimalField(max_digits=4, decimal_places=2)
-    num_reviews = serializers.IntegerField()
     full_name = serializers.SerializerMethodField(read_only=True)
+    profile_photo = serializers.SerializerMethodField()
     preferred_locations = serializers.ListField(
         child=serializers.CharField(), required=False, source="preferred_locations_list"
     )
@@ -121,9 +112,12 @@ class ProfileSerializer(serializers.Serializer):
             "is_agent",
             "rating",
             "num_reviews",
-            "reviews",
             "preferred_locations",
         ]
+        extra_kwargs = {
+            "rating": {"allow_null": True},
+            "num_reviews": {"required": False},
+        }
 
     def get_full_name(self, obj):
         first_name = obj.user.first_name.title()
@@ -214,4 +208,61 @@ class LogoutSerializer(serializers.Serializer):
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
-    pass
+    email = serializers.EmailField()
+    code = serializers.CharField()
+    new_password = serializers.CharField(
+        max_length=60, min_length=8, write_only=True, required=False
+    )
+    confirm_password = serializers.CharField(
+        max_length=60, min_length=8, write_only=True, required=False
+    )
+
+    default_error_messages = {
+        "password_mismatch": "passwords did not match",
+        "password_required": "Both new_password and confirm_password are required.",
+        "reset_code_expired": "Password reset code has expired.",
+        "reset_code_invalid": "Invalid or expired password reset code.",
+    }
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        code = attrs.get("code")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError(
+                {"email": "User with this email does not exist."}
+            )
+
+        try:
+            reset_entry = PasswordResetCode.objects.get(user=user, code=code)
+        except PasswordResetCode.DoesNotExist:
+            raise serializers.ValidationError({"code": self.error_messages["reset_code_invalid"]})
+
+        timeout_seconds = getattr(settings, "PASSWORD_RESET_TIMEOUT", 0)
+        if timeout_seconds:
+            delta = timezone.now() - reset_entry.timestamp
+            if delta.total_seconds() > timeout_seconds:
+                raise serializers.ValidationError(
+                    {"code": self.error_messages["reset_code_expired"]}
+                )
+
+        if new_password or confirm_password:
+            if not new_password or not confirm_password:
+                raise serializers.ValidationError(
+                    {"new_password": self.error_messages["password_required"]}
+                )
+            if new_password != confirm_password:
+                raise serializers.ValidationError(
+                    {"confirm_password": self.error_messages["password_mismatch"]}
+                )
+            attrs["new_password"] = new_password
+        else:
+            attrs["new_password"] = None
+
+        attrs["user"] = user
+        attrs["reset_entry"] = reset_entry
+        return attrs

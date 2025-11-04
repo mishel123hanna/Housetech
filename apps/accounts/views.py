@@ -1,7 +1,6 @@
-from django.conf import settings
 from django.utils import timezone
 from rest_framework import generics, status
-from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.authtoken.models import Token
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,6 +16,7 @@ from .serializers import (
     UserRegisterationSerializer,
     VerifyOTPSerializer,
 )
+from .utils import generate_numeric_code, send_password_reset_email
 
 
 class RegisterUserAPIView(GenericAPIView):
@@ -45,31 +45,30 @@ class VerifyUserEmailAPIView(GenericAPIView):
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"message": "Invalid data provided"}, status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
 
-        otp_code = serializer.validated_data.get("otp")
-        email = serializer.validated_data.get("email")
+        otp_code = serializer.validated_data["otp"]
+        email = serializer.validated_data["email"]
 
-        try:
-            otp_obj = OneTimePassword.objects.get(user__email=email, code=otp_code)
-            user = otp_obj.user
-            if not user.is_active:
-                user.is_active = True
-                user.save()
-            otp_obj.delete()
-            return Response(
-                {"message": "Account verified successfully"}, status=status.HTTP_200_OK
-            )
-        except OneTimePassword.DoesNotExist:
+        otp_obj = (
+            OneTimePassword.objects.select_related("user")
+            .filter(user__email=email, code=otp_code)
+            .first()
+        )
+        if not otp_obj:
             return Response(
                 {"message": "Passcode is invalid or not associated with the user"},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = otp_obj.user
+        if not user.is_active:
+            user.is_active = True
+            user.save(update_fields=["is_active"])
+        otp_obj.delete()
+        return Response(
+            {"message": "Account verified successfully"}, status=status.HTTP_200_OK
+        )
 
 
 class LoginUserAPIView(GenericAPIView):
@@ -77,10 +76,7 @@ class LoginUserAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        print(request.user)
-        serializer = self.serializer_class(
-            data=request.data, context={"request": request}
-        )
+        serializer = self.get_serializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -90,14 +86,22 @@ class LogoutAPIView(GenericAPIView):
     serializer_class = LogoutSerializer
 
     def post(self, request):
-        try:
-            token = request.auth
-            token.delete()
+        token = getattr(request, "auth", None)
+        if token is None:
+            # Fall back to clearing tokens associated with the user.
+            Token.objects.filter(user=request.user).delete()
             return Response(
                 {"success": "Successfully logged out."}, status=status.HTTP_200_OK
             )
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if hasattr(token, "delete"):
+            token.delete()
+        else:
+            Token.objects.filter(key=str(token)).delete()
+
+        return Response(
+            {"success": "Successfully logged out."}, status=status.HTTP_200_OK
+        )
 
 
 class PasswordResetRequestAPIView(GenericAPIView):
@@ -105,24 +109,30 @@ class PasswordResetRequestAPIView(GenericAPIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            try:
-                email = serializer.validated_data["email"]
-                user = CustomUser.objects.get(email=email)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-                PasswordResetCode.objects.update_or_create(user=user, code=0)
+        email = serializer.validated_data["email"]
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"message": "Email does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-                return Response(
-                    {"message": "Password reset email sent successfully."},
-                    status=status.HTTP_200_OK,
-                )
-            except Exception:
-                return Response(
-                    {"message": "Email Does not Exist"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        reset_code = generate_numeric_code()
+        reset_entry, _ = PasswordResetCode.objects.get_or_create(user=user)
+        reset_entry.code = reset_code
+        reset_entry.timestamp = timezone.now()
+        reset_entry.save(update_fields=["code", "timestamp"])
+
+        send_password_reset_email(user, reset_code)
+
+        return Response(
+            {"message": "Password reset email sent successfully."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetConfirmAPIView(GenericAPIView):
@@ -130,57 +140,24 @@ class PasswordResetConfirmAPIView(GenericAPIView):
     serializer_class = PasswordResetConfirmSerializer
 
     def post(self, request):
-        email = request.data.get("email", "")
-        code = request.data.get("code", "")
-        new_password = request.data.get("new_password", "")
-        confirm_password = request.data.get("confirm_password")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        try:
-            user = CustomUser.objects.get(email=email)
-            reset_entry = PasswordResetCode.objects.get(user=user, code=code)
+        user = serializer.validated_data["user"]
+        reset_entry = serializer.validated_data["reset_entry"]
+        new_password = serializer.validated_data["new_password"]
 
-            # Verify if the reset code is still valid
-            if (
-                timezone.now() - reset_entry.timestamp
-            ).seconds > settings.PASSWORD_RESET_TIMEOUT:
-                raise AuthenticationFailed(
-                    {"message": "Password reset code has expired."},
-                    status=status.HTTP_401_UNAUTHORIZED,
-                )
-            if code and not new_password:
-                data = {"email": email, "valid": True}
+        if not new_password:
+            return Response({"email": user.email, "valid": True}, status=status.HTTP_200_OK)
 
-                return Response(data, status=status.HTTP_200_OK)
-            if code and new_password and confirm_password:
-                if new_password == confirm_password:
-                    user.set_password(new_password)
-                    user.save()
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+        reset_entry.delete()
 
-                    reset_entry.delete()
-                    return Response(
-                        {"message": "successfully reset password"},
-                        status=status.HTTP_201_CREATED,
-                    )
-                else:
-                    raise AuthenticationFailed(
-                        {"datial": "passwords did not match"},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                return Response(
-                    {
-                        "message": "email , code, new_password, confirm_password are required"
-                    }
-                )
-        except CustomUser.DoesNotExist:
-            return Response(
-                {"message": "User with this email does not exist."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except PasswordResetCode.DoesNotExist:
-            raise AuthenticationFailed(
-                {"message": "Invalid or expired password reset code."},
-            )
+        return Response(
+            {"message": "Successfully reset password"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class GetProfileAPIView(GenericAPIView):
@@ -188,9 +165,14 @@ class GetProfileAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        user = self.request.user
-        user_profile = Profile.objects.get(user=user)
-        serializer = ProfileSerializer(user_profile, context={"request": request})
+        try:
+            profile = request.user.profile
+        except Profile.DoesNotExist:
+            return Response(
+                {"message": "Profile not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(profile, context={"request": request})
         return Response({"profile": serializer.data}, status=status.HTTP_200_OK)
 
 
@@ -200,26 +182,19 @@ class UpdateProfileAPIView(GenericAPIView):
     serializer_class = UpdateProfileSerializer
 
     def patch(self, request):
-        email = request.user
         try:
-            Profile.objects.get(user__email=email)
+            profile = request.user.profile
         except Profile.DoesNotExist:
             return Response(
                 {"message": "user does not exist"}, status=status.HTTP_404_NOT_FOUND
             )
-        if email != email:
-            return Response(
-                {"message": "Not your Profile"}, status=status.HTTP_403_FORBIDDEN
-            )
-        data = request.data
-        serializer = UpdateProfileSerializer(
-            instance=request.user.profile, data=data, partial=True
+
+        serializer = self.get_serializer(
+            profile, data=request.data, partial=True, context={"request": request}
         )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # class TopAgentsListAPIView(generics.ListAPIView):
@@ -232,3 +207,6 @@ class AgentListAPIView(generics.ListAPIView):
     permission_classes = (IsAuthenticated,)
     queryset = Profile.objects.filter(is_agent=True)
     serializer_class = ProfileSerializer
+
+    def get_queryset(self):
+        return super().get_queryset().select_related("user")
